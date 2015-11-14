@@ -16,8 +16,8 @@ defaults:
 
 description: 生活、好奇与探知
 # gavatar头像及Favicon
-#gavatar: http://pic.yupoo.com/24plus/E2O4V5oL/medium.jpg
-#favicon: http://pic.yupoo.com/24plus/E2O4V5oL/medium.jpg
+#gavatar: /assets/ico/portrait.jpg
+favicon: /assets/ico/portrait.jpg
 
 author:
   name: hawker
