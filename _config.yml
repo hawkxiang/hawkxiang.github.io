@@ -16,7 +16,7 @@ defaults:
 
 description: 生活、好奇与探知
 # gavatar头像及Favicon
-#gavatar: /assets/ico/portrait.jpg
+gavatar: /assets/ico/portrait.jpg
 favicon: /assets/ico/portrait.jpg
 
 author:
