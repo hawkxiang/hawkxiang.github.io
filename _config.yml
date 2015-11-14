@@ -16,19 +16,18 @@ defaults:
 
 description: 生活、好奇与探知
 # gavatar头像及Favicon
-gavatar: http://pic.yupoo.com/24plus/E2O4V5oL/medium.jpg
-favicon: http://pic.yupoo.com/24plus/E2O4V5oL/medium.jpg
+#gavatar: http://pic.yupoo.com/24plus/E2O4V5oL/medium.jpg
+#favicon: http://pic.yupoo.com/24plus/E2O4V5oL/medium.jpg
 
 author:
-  name: 驿翝
+  name: hawker
   email: hawkxiang.cpp@gmail.com
   github: hawkxiang
   twitter: szjoshua
   bio: Hawker's Technology Blog
 #  email_md5: 726351295ec82e145928582f595aa3aa
 
-#rss_path: feed.xml
-rss_path: feed
+rss_path: feed.xml
 categories_path: categories.html
 tags_path: tags.html
 
