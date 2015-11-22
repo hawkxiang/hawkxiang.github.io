@@ -31,4 +31,4 @@ rss_path: feed
 categories_path: categories
 tags_path: tags
 
-BASE_PATH: www.hawkers.cc
+BASE_PATH: http://www.hawkers.cc
