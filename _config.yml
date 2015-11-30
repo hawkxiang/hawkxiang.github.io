@@ -14,7 +14,7 @@ defaults:
     values:
       title: Hawker Space  
 
-description: 生活、好奇与探知
+description: 好奇、探知
 # gavatar头像及Favicon
 gavatar: /assets/ico/portrait.jpg
 favicon: /assets/ico/portrait.jpg
@@ -23,7 +23,7 @@ author:
   name: hawker
   email: hawkxiang.cpp@gmail.com
   github: hawkxiang
-  twitter: szjoshua
+  twitter: hawkxiangcpp
   bio: Hawker's Technology Blog
 #  email_md5: 726351295ec82e145928582f595aa3aa
 
