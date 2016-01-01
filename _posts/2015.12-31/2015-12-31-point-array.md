@@ -17,8 +17,8 @@ tags:
 
 ###指针与数组的区别
 还是，先说说指针与数组的区别吧！看一段代码
-{% highlight c %}
 
+{% highlight c %}
     #include <stdio.h>
     int main(){
         char* ptr = "aaaa";
