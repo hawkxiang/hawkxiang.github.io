@@ -18,6 +18,7 @@ tags:
 ###指针与数组的区别
 还是，先说说指针与数组的区别吧！看一段代码
 {% highlight c %}
+
     #include <stdio.h>
     int main(){
         char* ptr = "aaaa";
@@ -32,6 +33,7 @@ tags:
 其输出的结果是：
 
 {% highlight bash %}
+
     直接访问指针: 400604
     取直接地址: fb4008d8
     直接访问数组: fb4008d0
