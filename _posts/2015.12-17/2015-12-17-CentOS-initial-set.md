@@ -1,6 +1,6 @@
 ---
 layout: post
-title: CentOS7初始化设置（initial setup of CentOS7）
+title: CentOS7初始化设置（Initial setup of CentOS7）
 author: hawker
 permalink: /2015/12/CentOS-initial-setup.html
 date: 2015-12-17 21:03:00
@@ -9,7 +9,7 @@ category:
 tags:
     - CentOS
 ---
-CentOS一直是liunx server的稳定系统，前端时间安装新的CentOS 7，重启后一直无法进入图形界面，当然文字界面进入很正常。可能是以前给服务器装系统很少安装Gnome Or KDE 的缘故，初见这个问题时十分费解，也能是CentOS 7的初始化设置太简陋的缘故，总之解决这个问题花费了一些精力。
+CentOS一直是liunx server的稳定系统，前端时间安装新的CentOS 7，重启后一直无法进入图形界面，当然文字界面进入很正常。可能是以前给服务器装系统很少安装Gnome Or KDE 的缘故，初见这个问题时十分费解，也可能是CentOS 7的初始化设置太简陋的缘故，总之解决这个问题花费了一些精力。
 &nbsp;
 
 ###配置提示
