@@ -3,7 +3,7 @@ layout: post
 title: C语言中指针与数组内存分配
 author: hawker
 permalink: /2015/12/point-array.html
-date: 2015-02-01 23:00:00
+date: 2015-12-31 23:00:00
 category:
     - 编程
 tags:
