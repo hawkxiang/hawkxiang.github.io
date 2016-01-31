@@ -12,16 +12,16 @@ tags:
 ---
 服务器数据同步备份是常见的容灾需求，我的实验室一台Web服务器需要定时备份网站相关数据至备份服务器上。今天谈谈同步备份的实现。介绍中我们将待备份的Web服务器视作`ClientA`，存储备份数据的服务器称作`ServerB`。
 
-###ssh免密码登录设置
+###SSH免密码登录设置
 
 在介绍同步实现细节之前，我们有必要讨论一下如何实现SSH免密码登录。在周期运行的脚本中`(crontab)`，实现远程登录时手动输入登录口令是不可取的。在我们的同步脚本中，`ClientA`需要远程无密码的登录至`ServerB`。首先，在`ClientA`上生成用户sjd_backup登录用的公、私密钥，并将公钥传输给`ServerB`。
 
 {% highlight bash %}
-＃创建新的密钥
+#创建新的密钥
 [clientA_backup@localhost ~]$ ssh-keygen
 #对于出现的选项，一直回车，使用默认设置创建密钥。
 	
-＃查看密钥是否创建成功
+#查看密钥是否创建成功
 [clientA_backup@localhost ~]$ ls -ld ~/.ssh; ls -l ~/.ssh
 drwx------ 2 clientA_backup clientA_backup 4096 1月 30 02:36 /home/sjd_backup/.ssh
 -rw------- 1 clientA_backup clientA_backup 1679 1月 30 02:36 id_rsa
@@ -41,7 +41,7 @@ id_rsa是私钥，用户sjd_backup自己拥有读写权限；id_rsa.pub是公钥
 #查看ssh配置文件，确定authorized_keys位置
 [serverB_backup@localhost ~]$ vim /etc/ssh/sshd_config
 	
-＃如果是新用户，不存在authorized_keys文件，需要手动创建.ssh目录存放authorized_keys文件
+#如果是新用户，不存在authorized_keys文件，需要手动创建.ssh目录存放authorized_keys文件
 [serverB_backup@localhost ~]$ mkdir .ssh; chmod 700 .ssh
 	
 #确认ClientA发来的公钥id_rsa.pub是否已经收到
