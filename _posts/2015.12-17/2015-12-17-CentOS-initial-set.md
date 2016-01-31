@@ -15,7 +15,7 @@ CentOS一直是liunx server的稳定系统，前端时间安装新的CentOS 7，
 ###配置提示
 安装带图形化的CentOS 7后，重启重进系统时，出现下面提示信息：
 
-{% highlight vim %}
+{% highlight bash %}
 Initial setup of CentOS Linux 7 (Core)
 1) [!] License information
 	(License not accepted)
