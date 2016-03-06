@@ -12,16 +12,14 @@ tags:
 CentOS一直是liunx server的稳定系统，前端时间安装新的CentOS 7，重启后一直无法进入图形界面，当然文字界面进入很正常。可能是以前给服务器装系统很少安装Gnome Or KDE 的缘故，初见这个问题时十分费解，也可能是CentOS 7的初始化设置太简陋的缘故，总之解决这个问题花费了一些精力。
 &nbsp;
 
-###配置提示
+### 配置提示
 
 安装带图形化的CentOS 7后，重启重进系统时，出现下面提示信息：
 
-{% highlight bash %}
-Initial setup of CentOS Linux 7 (Core)
-1) [!] License information
-	(License not accepted)
-Please make your choice from [ '1' to enter the License information spoke | 'q' to quit | 'c' to continue | 'r' to refresh]:
-{% endhighlight %}
+	Initial setup of CentOS Linux 7 (Core)
+	1) [!] License information
+		(License not accepted)
+	Please make your choice from [ '1' to enter the License information spoke | 'q' to quit | 'c' to continue | 'r' to refresh]:
 
 其实解决方法比较显然，与图形化的系统初始化设置相似。根据提示一步步操作即可：
 
