@@ -13,6 +13,7 @@ CentOS一直是liunx server的稳定系统，前端时间安装新的CentOS 7，
 &nbsp;
 
 ###配置提示
+
 安装带图形化的CentOS 7后，重启重进系统时，出现下面提示信息：
 
 {% highlight bash %}
