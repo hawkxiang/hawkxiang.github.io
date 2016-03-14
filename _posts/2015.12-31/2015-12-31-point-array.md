@@ -19,7 +19,7 @@ tags:
 
 还是，先说说指针与数组的区别吧！看一段代码
 
-{% highlight c linenos %}
+{% highlight c %}
     #include <stdio.h>
     int main(){
         char* ptr = "aaaa";
@@ -34,7 +34,7 @@ tags:
 
 其输出的结果是：
 
-{% highlight vim linenos %}
+{% highlight vim %}
     直接访问指针: 400604
     取直接地址: fb4008d8
     直接访问数组: fb4008d0
@@ -57,7 +57,7 @@ tags:
 首先，说一说结构体中成员变量的内存地址分配。所谓变量，其实就是内存地址的一个抽象名字罢了。机器只知道数字的地址，变量命名是为了可读性。
 用一个简单的例子来看看，结构体中变量的地址。
 
-{% highlight c linenos %}
+{% highlight c %}
     #include <stdio.h>
     struct memoryassign{
         int a;
@@ -72,14 +72,14 @@ tags:
 
 通过`gdb`调试工具来看下结构相关变量的内存地址。
 
-{% highlight vim linenos %}
+{% highlight vim %}
     (gdb) p test
     $1 = {a = 4195536, p = 0x4003c0 <_start> "1\355I\211\321^H\211\342H\203\344\360PTI\307\300@\005@", b = -7520}
 {% endhighlight %}
 
 我们发现`test`的成员变量被编译器进行了初始化，但是都是一些奇怪的值。由此，明白显示初始化的必要性，它能有效的避免一些bug。
 
-{% highlight vim linenos %}
+{% highlight vim %}
     (gdb) p &test
     $2 = (struct memory *) 0x7fffffffe1a0
     (gdb) p &(test.a)
