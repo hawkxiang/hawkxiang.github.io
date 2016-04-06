@@ -1,4 +1,14 @@
-##unordered_map如何使用pair作键值(key)
+---
+layout: post
+title: unordered_map如何使用pair作键值(key)
+author: hawker
+permalink: /2015/12/point-array.html
+date: 2016-04-5 23:00:00
+category:
+    - 编程
+tags:
+    - C++
+---
 C++ STL中的unordered_map底层是通过Hash实现的，当使用pair作为键值(Key)时，需要手动传入Hash实例类型。
 
 ###函数对象的实现方式
