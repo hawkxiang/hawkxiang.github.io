@@ -74,6 +74,7 @@ Lambda是C++的一种新特性，既然可以通过函数对象实现上面的�
 	
 你可能会奇怪为何`function<size_t (const pair<int, int>&)>`只构造了空的function对象呢，其实这也很显然，functional只是为了通用的存储“可调用对象”，所以它只能默认构造为空function。
 
+	
 	function<size_t (const pair<int, int>&)> a = [](const pair<int, int>& i) -> size_t{return i.first ^ i.second;};
 	
 	function<size_t (const pair<int, int>&)> b = [](const pair<int, int>& i) -> size_t{return 5;};
