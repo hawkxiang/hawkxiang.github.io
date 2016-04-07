@@ -7,7 +7,7 @@ date: 2016-04-5 23:00:00
 category:
     - 编程
 tags:
-    - C
+    - C/CPP
     - STL
     - Lambda
 ---
