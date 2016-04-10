@@ -2,7 +2,7 @@
 layout: post
 title: C++中unordered_map如何使用pair作键值(key)
 author: hawker
-permalink: /2015/12/point-array.html
+permalink: /2015/12/unorderedmap-pair-funtor.html
 date: 2016-04-5 23:00:00
 category:
     - 编程
