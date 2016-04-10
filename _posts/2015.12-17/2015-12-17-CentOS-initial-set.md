@@ -16,10 +16,12 @@ CentOS一直是liunx server的稳定系统，前端时间安装新的CentOS 7，
 
 安装带图形化的CentOS 7后，重启重进系统时，出现下面提示信息：
 
-	Initial setup of CentOS Linux 7 (Core)
-	1) [!] License information
-		(License not accepted)
-	Please make your choice from [ '1' to enter the License information spoke | 'q' to quit | 'c' to continue | 'r' to refresh]:
+{% highlight c %}
+Initial setup of CentOS Linux 7 (Core)
+1) [!] License information
+	(License not accepted)
+Please make your choice from [ '1' to enter the License information spoke | 'q' to quit | 'c' to continue | 'r' to refresh]:
+{% endhighlight %}
 
 其实解决方法比较显然，与图形化的系统初始化设置相似。根据提示一步步操作即可：
 
