@@ -16,21 +16,22 @@ C++ STL中的unordered_map底层是通过Hash实现的，当使用pair作为键�
 
 参考网上的解决方案，通过一个函数对象向unordered_map传递Hash实例类型。具体实现如下面的代码：
 
-	#include <unordered_map>;
-	using namespace std;
-	struct hashfunc {
-		template<typename T, typename U>
-		size_t operator()(const pair<T, U> &i) const {
-			return hash<T>()(x.first) ^ hash<U>()(x.second);
-		}
-	};
-	
-	int main() {
-		unordered_map<pair<int, int>, int, hashfunc> func_map;
-		func_map[make_pair(1, 2)]++;
-		return 0;
+```C
+#include <unordered_map>;
+using namespace std;
+struct hashfunc {
+	template<typename T, typename U>
+	size_t operator()(const pair<T, U> &i) const {
+		return hash<T>()(x.first) ^ hash<U>()(x.second);
 	}
-	
+};
+
+int main() {
+	unordered_map<pair<int, int>, int, hashfunc> func_map;
+	func_map[make_pair(1, 2)]++;
+	return 0;
+}
+```
 在这中解决方案中，我们创建了一个函数对象类`hashfunc`，并将它作为`unordered_map`的Hash实例类型传入，成功构造以pair为Key的无序容器。
 
 ### Lambda如何实现呢？
