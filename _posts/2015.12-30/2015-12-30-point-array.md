@@ -21,15 +21,15 @@ tags:
 
 {% highlight c %}
 #include <stdio.h>
-    int main(){
-        char* ptr = "aaaa";
-        char arr[5] = "bbbb";
-        printf("直接访问指针: %x\n",ptr);
-        printf("取直接地址: %x\n",&ptr);
-        printf("直接访问数组: %x\n",arr);
-        printf("取数组地址: %x\n",&arr);
-        return 0;
-    }
+int main(){
+    char* ptr = "aaaa";
+    char arr[5] = "bbbb";
+    printf("直接访问指针: %x\n",ptr);
+    printf("取直接地址: %x\n",&ptr);
+    printf("直接访问数组: %x\n",arr);
+    printf("取数组地址: %x\n",&arr);
+    return 0;
+}
 {% endhighlight %}
 
 其输出的结果是：
@@ -58,36 +58,36 @@ tags:
 用一个简单的例子来看看，结构体中变量的地址。
 
 {% highlight c %}
-    #include <stdio.h>
-    struct memoryassign{
-        int a;
-        char* p;
-        short b;
-    }
-    int main(){
-        struct memoryassign test;
-        return 0;
-    }
+#include <stdio.h>
+struct memoryassign{
+    int a;
+    char* p;
+    short b;
+}
+int main(){
+    struct memoryassign test;
+    return 0;
+}
 {% endhighlight %}
 
 通过`gdb`调试工具来看下结构相关变量的内存地址。
 
 {% highlight vim %}
-    (gdb) p test
-    $1 = {a = 4195536, p = 0x4003c0 <_start> "1\355I\211\321^H\211\342H\203\344\360PTI\307\300@\005@", b = -7520}
+(gdb) p test
+$1 = {a = 4195536, p = 0x4003c0 <_start> "1\355I\211\321^H\211\342H\203\344\360PTI\307\300@\005@", b = -7520}
 {% endhighlight %}
 
 我们发现`test`的成员变量被编译器进行了初始化，但是都是一些奇怪的值。由此，明白显示初始化的必要性，它能有效的避免一些bug。
 
 {% highlight vim %}
-    (gdb) p &test
-    $2 = (struct memory *) 0x7fffffffe1a0
-    (gdb) p &(test.a)
-    $3 = (int *) 0x7fffffffe1a0
-    (gdb) p &(test.p)
-    $4 = (char **) 0x7fffffffe1a8
-    (gdb) p &(test.b)
-    $5 = (short *) 0x7fffffffe1b0
+(gdb) p &test
+$2 = (struct memory *) 0x7fffffffe1a0
+(gdb) p &(test.a)
+$3 = (int *) 0x7fffffffe1a0
+(gdb) p &(test.p)
+$4 = (char **) 0x7fffffffe1a8
+(gdb) p &(test.b)
+$5 = (short *) 0x7fffffffe1b0
 {% endhighlight %}
 
 接着，查看各个变量对应的内存地址。显然，结构体的内存地址与其第一个成员变量的地址相同。结构体中的变量内存地址是连续的，说明结构体的内存是连续分配的。
