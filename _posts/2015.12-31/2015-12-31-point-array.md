@@ -5,7 +5,7 @@ author: hawker
 permalink: /2015/12/point-array.html
 date: 2015-12-31 23:00:00
 category:
-    - 编程a
+    - 编程
 tags:
     - C
 ---
