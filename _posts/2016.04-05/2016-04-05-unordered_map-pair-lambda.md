@@ -16,8 +16,8 @@ C++ STL中的unordered_map底层是通过Hash实现的，当使用pair作为键�
 
 参考网上的解决方案，通过一个函数对象向unordered_map传递Hash实例类型。具体实现如下面的代码：
 
-```C
-#include <unordered_map>;
+```C++
+#include <unordered_map>
 using namespace std;
 struct hashfunc {
 	template<typename T, typename U>
