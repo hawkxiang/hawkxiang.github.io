@@ -34,7 +34,7 @@ int main(){
 
 其输出的结果是：
 
-{% highlight vim %}
+{% highlight Vim Script %}
     直接访问指针: 400604
     取直接地址: fb4008d8
     直接访问数组: fb4008d0
@@ -72,14 +72,14 @@ int main(){
 
 通过`gdb`调试工具来看下结构相关变量的内存地址。
 
-{% highlight vim %}
+{% highlight Vim Script %}
 (gdb) p test
 $1 = {a = 4195536, p = 0x4003c0 <_start> "1\355I\211\321^H\211\342H\203\344\360PTI\307\300@\005@", b = -7520}
 {% endhighlight %}
 
 我们发现`test`的成员变量被编译器进行了初始化，但是都是一些奇怪的值。由此，明白显示初始化的必要性，它能有效的避免一些bug。
 
-{% highlight vim %}
+{% highlight Vim Script %}
 (gdb) p &test
 $2 = (struct memory *) 0x7fffffffe1a0
 (gdb) p &(test.a)
