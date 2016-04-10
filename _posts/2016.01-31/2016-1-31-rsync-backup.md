@@ -16,7 +16,7 @@ tags:
 
 在介绍同步实现细节之前，我们有必要讨论一下如何实现SSH免密码登录。在周期运行的脚本中`(crontab)`，实现远程登录时手动输入登录口令是不可取的。在我们的同步脚本中，`ClientA`需要远程无密码的登录至`ServerB`。首先，在`ClientA`上生成用户sjd_backup登录用的公、私密钥，并将公钥传输给`ServerB`。
 
-{% highlight linenos %}
+{% highlight %}
 #创建新的密钥
 [clientA_backup@localhost ~]$ ssh-keygen
 #对于出现的选项，一直回车，使用默认设置创建密钥。
@@ -30,14 +30,14 @@ drwx------ 2 clientA_backup clientA_backup 4096 1月 30 02:36 /home/sjd_backup/.
 
 id_rsa是私钥，用户sjd_backup自己拥有读写权限；id_rsa.pub是公钥，将被传输给`ServerB`。注意创建的密钥文件权限需要正确，~/.ssh/目录应该是700。下面需要将id_rsa.pub传给`ServerB`即可：
 	
-{% highlight linenos %}
+{% highlight %}
 [clientA_backup@localhost ~]$ sftp serverB_backup@xxx.xxx.xxx.xxx  <==ServerB的IP地址。
 > put ~/.ssh/id_rsa.pub
 {% endhighlight %}
 	
 接下来我们登录到`ServerB`,更具它的sshd_config中的AuthorizedKeysFile配置选项，找到authorized_keys文件，并将`ClientA`传递过来的公钥id_rsa.pub内容附加到authorized_keys中。
 
-{% highlight linenos %}
+{% highlight %}
 #查看ssh配置文件，确定authorized_keys位置
 [serverB_backup@localhost ~]$ vim /etc/ssh/sshd_config
 	
@@ -55,7 +55,7 @@ id_rsa是私钥，用户sjd_backup自己拥有读写权限；id_rsa.pub是公钥
 	
 完成上面`ServerB`的设置后，确认权限是否正确。此时，回到`ClientA`切换到clientA_backup身份即可实现无需密码SSH登录到`ServerB`。
 
-{% highlight linenos %}
+{% highlight %}
 [clientA_backup@localhost ~]$ ssh serverB_backup@xxx.xxx.xxx.xxx  <==ServerB的IP地址。
 Last login: .............          <==确认可以无密码登录
 {% endhighlight %}
@@ -63,7 +63,7 @@ Last login: .............          <==确认可以无密码登录
 ### 同步备份
 我们将使用`rsync`配合`crontab`进行两台机器间的数据备份。`rsync`的基本用法如下，具体的选项和参数可以参考man中的说明：
 
-{% highlight linenos %}
+{% highlight %}
 [clientA_backup@localhost ~]$ rsync [-avrlptgoD] [source] [destination]
 {% endhighlight %}
 	
