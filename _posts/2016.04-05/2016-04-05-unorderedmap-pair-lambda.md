@@ -75,7 +75,7 @@ int main() {
 可以发现，此时编译一切正常，但执行时报错。这是为什么呢？其实结合上面的解释，结论也很显然了。编译出错是因为我们指定的模版Hash类型，无法默认构造实例；但是用function保存lambda表达式后，这个function对象对映的类型是`function<size_t (const pair<int, int>&)>`，它是有默认构造函数的，故而`unordered_map`可以默认实例化成功，编译正确。但是，`function<size_t (const pair<int, int>&)>`的默认构造函数只会构造一个空的function，所以我们还是要如对待lambda对象那样，手动传入function对象引用（hashfuna）。
 
 {% highlight C++ linenos%}
-unordered_map<pair<int, int>, int, decltype(hashfuna)> lam_map（10, hashfuna);
+unordered_map<pair<int, int>, int, decltype(hashfuna)> lam_map(10, hashfuna);
 {% endhighlight %}
 你可能会奇怪为何`function<size_t (const pair<int, int>&)>`只构造了空的function对象呢，其实这也很显然，functional只是为了通用的存储“可调用对象”，所以它只能默认构造为空function。
 
