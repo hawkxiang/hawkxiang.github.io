@@ -9,6 +9,7 @@ category:
 tags:
     - cpp
     - lambda
+    - stl
 ---
 C++ STL中的unordered_map底层是通过Hash实现的，当使用pair作为键值(Key)时，需要手动传入Hash实例类型。
 
