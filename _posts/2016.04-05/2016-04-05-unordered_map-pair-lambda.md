@@ -37,7 +37,7 @@ int main() {
 ### Lambda如何实现呢？
 Lambda是C++的一种新特性，既然可以通过函数对象实现上面的功能。自然，我们会联想用lambda表达式去实现上面的功能。最初的实现想法：
 
-```c
+```c++
 int main() {
 	auto hashlambda = [](const pair<int, int>& i) -> size_t{return i.first ^ i.second;};
 	unordered_map<pair<int, int>, int, decltype(hashlambda)> lam_map;
@@ -48,7 +48,8 @@ int main() {
 进行编译出错，提示“lambda默认构造函数是删除的(deleted)”。为什么会这样，同样是可调用对象，为何lambda实现时无法通过编译呢？
 
 自己一翻折腾并大牛的热心帮助下终于有所明白，简单说来，`unordered_map`继承自_Hash类型，_Hash用到一个_Uhash_compare类来封装传入的hash函数，如果`unordered_map`构造函数没有显示的传入hash函数实例引用，则`unordered_map`默认构造函数使用第三个模板参数指定的Hash类型的默认构造函数，进行hash函数实例的默认构造。在第一种情况中，编译为函数类型合成默认构造函数也就是hash_fun()，所以我们在定义`unordered_map`时即使不传入函数对象实例，也能通过默认构造函数生成。但是，对于lambda对象来说，虽然编译时会为每个lambda表达式产生一个匿名类，但是这个匿名类时***不含有默认构造函数(=deleted)***。因此，如果实例化`unordered_map`时，不传入lambda对象实例引用，默认构造函数不能为我们合成一个默认的hash函数实例。所以，编译时产生了上面的错误。明白了这些，自然知道如何去修改了。
-```c
+
+```c++
 int main() {
 	auto hashlambda = [](const pair<int, int>& i) -> size_t{return i.first ^ i.second;};
 	unordered_map<pair<int, int>, int, decltype(hashlambda)> lam_map(10, hashlambda);
@@ -61,7 +62,8 @@ int main() {
 ### Functional可以通过编译，但存在运行时错误
 
 针对上面lambda功能实现时存在的编译错误，有一种方法也可以避免编译出错。用function对象来保存lambda表达式：
-```c
+
+```c++
 int main() {
 	function<size_t (const pair<int, int>&)> hashfuna = [](const pair<int, int>& i) -> size_t{return i.first ^ i.second;};
 	unordered_map<pair<int, int>, int, decltype(hashfuna)> lam_map;
@@ -70,12 +72,13 @@ int main() {
 }
 ```
 可以发现，此时编译一切正常，但执行时报错。这是为什么呢？其实结合上面的解释，结论也很显然了。编译出错是因为我们指定的模版Hash类型，无法默认构造实例；但是用function保存lambda表达式后，这个function对象对映的类型是`function<size_t (const pair<int, int>&)>`，它是有默认构造函数的，故而`unordered_map`可以默认实例化成功，编译正确。但是，`function<size_t (const pair<int, int>&)>`的默认构造函数只会构造一个空的function，所以我们还是要如对待lambda对象那样，手动传入function对象引用（hashfuna）。
-```c
+
+```c++
 unordered_map<pair<int, int>, int, decltype(hashfuna)> lam_map（10, hashfuna);
 ```
 你可能会奇怪为何`function<size_t (const pair<int, int>&)>`只构造了空的function对象呢，其实这也很显然，functional只是为了通用的存储“可调用对象”，所以它只能默认构造为空function。
 
-```c
+```c++
 function<size_t (const pair<int, int>&)> a = [](const pair<int, int>& i) -> size_t{return i.first ^ i.second;};
 
 function<size_t (const pair<int, int>&)> b = [](const pair<int, int>& i) -> size_t{return 5;};
