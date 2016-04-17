@@ -1,15 +1,15 @@
- ---                                                                                             
- layout: post
- title: DFS性能优化——剪枝策略
- author: hawker
- permalink: /2016/03/DFS-Optimization.html
- date: 2016-03-19 23:00:00
- category:
-     - 算法
- tags:
-     - DFS
-     - 剪枝优化
- ---
+---
+layout: post
+title: DFS性能优化--剪枝策略
+author: hawker
+permalink: /2016/03/DFS-Optimization.html
+date: 2016-03-19 23:00:00
+category:
+    - 算法
+tags:
+    - DFS
+    - 剪枝优化
+---
 
 前段时间研究了一下过必经点最短路径问题。本篇文章主要讨论一下DFS算法的性能优化及相关剪枝策略。
 
