@@ -35,7 +35,7 @@ struct node{
 
 图的初始化，直接上代码：
 	
-{% highlight C++ linenos%}
+{% highlight C++ %}
 void add_edge_into_matrix(short from, short to, short weight, short index){
     short k = -1;
     graph[from][to].weight = weight;
@@ -71,7 +71,7 @@ void add_edge_into_matrix(short from, short to, short weight, short index){
 ### 高效的Dijkstra实现
 因为剪枝策略时，需要求两点之间最短路径的权重。我们需要实现一个基于上面图数据结构的Dijkstra。使用C++中的优先队列，构造堆，优化Dijkstra算法的性能。
 
-{% highlight C++ linenos%}
+{% highlight C++ %}
 void Dijkstra(short s, short* weight) {
     for (short i = 0; i < MAXSIZE; i++)
         weight[i] = INF;
@@ -98,7 +98,7 @@ void Dijkstra(short s, short* weight) {
 ### DFS剪枝策略
 下面来看主函数中的图的初始化和相关预处理，DFS函数中将展示如何进行剪枝优化。
 
-{% highlight C++ linenos%}
+{% highlight C++ %}
 short origin, dest; //存储起点与终点
 short total_weights = INF;  //不连同边的权重
 bool cycle_check[MAXSIZE] = {false};  //遍历路径中，已经经过点的集合。
