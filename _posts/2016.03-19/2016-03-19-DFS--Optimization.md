@@ -13,7 +13,7 @@ tags:
 
 前段时间研究了一下过必经点最短路径问题。本篇文章主要讨论一下DFS算法的性能优化及相关剪枝策略。
 
-###图的数据结构
+### 图的数据结构
 为了同时具有邻接矩阵和邻接表的优势，使用下面的双向邻接结构。
 
 {% highlight C++ %}
@@ -68,7 +68,7 @@ void add_edge_into_matrix(short from, short to, short weight, short index){
 }
 {% endhighlight %}
 
-###高效的Dijkstra实现
+### 高效的Dijkstra实现
 因为剪枝策略时，需要求两点之间最短路径的权重。我们需要实现一个基于上面图数据结构的Dijkstra。使用C++中的优先队列，构造堆，优化Dijkstra算法的性能。
 
 {% highlight C++ linenos%}
@@ -95,7 +95,7 @@ void Dijkstra(short s, short* weight) {
 }
 {% endhighlight %}
 
-###DFS＋剪枝策略
+### DFS剪枝策略
 下面来看主函数中的图的初始化和相关预处理，DFS函数中将展示如何进行剪枝优化。
 
 {% highlight C++ linenos%}
