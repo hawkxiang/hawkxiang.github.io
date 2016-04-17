@@ -17,14 +17,14 @@ tags:
 为了同时具有邻接矩阵和邻接表的优势，使用下面的双向邻接结构。
 
 {% highlight C++ %}
-	struct node{
+struct node{
     	short node_l;   //同一行左边的邻居
     	short node_r;   //同一行右边的邻居
     	short node_u;     //同列上一个邻居
     	short node_d;     //同列下一个邻居
     	short weight;     //到该点的边权重
     	short index;      //边的编号
-	}graph[MAXSIZE][MAXSIZE];
+}graph[MAXSIZE][MAXSIZE];
 {% endhighlight %}
 `node_l`表示与目前顶点同一起点，的上一个终点。
 `node_r`表示与目前顶点同一起点，的下一个终点。
@@ -67,6 +67,7 @@ void add_edge_into_matrix(short from, short to, short weight, short index){
     graph[0][to].node_u = from;
 }
 {% endhighlight %}
+
 ###高效的Dijkstra实现
 因为剪枝策略时，需要求两点之间最短路径的权重。我们需要实现一个基于上面图数据结构的Dijkstra。使用C++中的优先队列，构造堆，优化Dijkstra算法的性能。
 
@@ -75,7 +76,6 @@ void Dijkstra(short s, short* weight) {
     for (short i = 0; i < MAXSIZE; i++)
         weight[i] = INF;
     weight[s] = 0;
-
     using ii = pair<short, short>;
     using vii = vector<ii>;
     priority_queue<ii, vii, greater<ii>> heap;
@@ -84,7 +84,6 @@ void Dijkstra(short s, short* weight) {
         ii top = heap.top(); heap.pop();
         short v = top.second, d = top.first;
         if (d > weight[v]) continue;
-
         for (short from = graph[0][v].node_d; from; from = graph[from][v].node_d) {
             int tmp = weight[v] + graph[from][v].weight;
             if (tmp < weight[from]) {
@@ -95,20 +94,21 @@ void Dijkstra(short s, short* weight) {
     }
 }
 {% endhighlight %}
+
 ###DFS＋剪枝策略
 下面来看主函数中的图的初始化和相关预处理，DFS函数中将展示如何进行剪枝优化。
 
 {% highlight C++ linenos%}
-	short origin, dest; //存储起点与终点
-	short total_weights = INF;  //不连同边的权重
-	bool cycle_check[MAXSIZE] = {false};  //遍历路径中，已经经过点的集合。
-	short to_dest_weight[MAXSIZE];        //剪枝预处理，到终点的每个点的最短路径权重
-	short to_designated_weight[CHECK_SIZE][MAXSIZE]; //到每个必经点，最短路径权重
-	short designated_point[CHECK_SIZE]; unsigned short designated_len = 0; //必经点集合
-	bool cutflag = false;  //拓扑稍大时，启用的剪枝标志
-	using namespace std;
-	vector<short> route;   //遍历路径集合
-	vector<short> short_path;//最短路径
+short origin, dest; //存储起点与终点
+short total_weights = INF;  //不连同边的权重
+bool cycle_check[MAXSIZE] = {false};  //遍历路径中，已经经过点的集合。
+short to_dest_weight[MAXSIZE];        //剪枝预处理，到终点的每个点的最短路径权重
+short to_designated_weight[CHECK_SIZE][MAXSIZE]; //到每个必经点，最短路径权重
+short designated_point[CHECK_SIZE]; unsigned short designated_len = 0; //必经点集合
+bool cutflag = false;  //拓扑稍大时，启用的剪枝标志
+using namespace std;
+vector<short> route;   //遍历路径集合
+vector<short> short_path;//最短路径
 
 void dfs_visit(short node, short total) {
 	//如果已经到达终点，处理如下
