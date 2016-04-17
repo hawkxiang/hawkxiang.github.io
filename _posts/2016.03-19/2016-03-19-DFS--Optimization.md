@@ -30,8 +30,8 @@ struct node{
 `node_r`表示与目前顶点同一起点，的下一个终点。
 `node_u`表示与目前顶点同一终点，的上一个起点。
 `node_d`表示与目前顶点同一终点，的下一个起点。
-矩阵的第一行表示｀[0, i]｀：指向以i为终点的第一个起点。
-矩阵的第一列表示｀[j, 0]｀：指向以j为起点的第一个终点。
+矩阵的第一行表示`[0, i]`：指向以i为终点的第一个起点。
+矩阵的第一列表示`[j, 0]`：指向以j为起点的第一个终点。
 
 图的初始化，直接上代码：
 	
@@ -111,7 +111,7 @@ vector<short> route;   //遍历路径集合
 vector<short> short_path;//最短路径
 
 void dfs_visit(short node, short total) {
-	//如果已经到达终点，处理如下
+//如果已经到达终点，处理如下
     if(node == dest) {
         //查询路径候选路径是否经过所有必经点
         if (route.size() < designated_len) return;
@@ -124,7 +124,7 @@ void dfs_visit(short node, short total) {
         }
         return;
     }
-    //未达到最终点时的处理：
+//未达到最终点时的处理：
     for (short from = graph[node][0].node_r; from; from = graph[node][from].node_r)
     {
         //已经经过的点，不处理，避免出现环
@@ -152,13 +152,13 @@ void dfs_visit(short node, short total) {
             cycle_check[from] = false;
         }
     }
-	}
+}
 	
-	//1. topo是原始点边数据输入
-	//2. edge_num边的个数
-	//3. demand必经点。
-	void search_route(char *topo[5000], int edge_num, char *demand)
-	{
+//1. topo是原始点边数据输入
+//2. edge_num边的个数
+//3. demand必经点。
+void search_route(char *topo[5000], int edge_num, char *demand)
+{
     //初始化起点、终点及必经点集合
     stringstream ss;
     string str = ""; char trash;
