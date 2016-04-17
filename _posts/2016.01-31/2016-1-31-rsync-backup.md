@@ -5,7 +5,7 @@ author: hawker
 permalink: /2016/16/rsync-backup.html
 date: 2016-1-31 21:10:00
 category:
-    - 系统维护
+    - 系统运维
 tags:
     - rsync
     - backup
