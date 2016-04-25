@@ -126,7 +126,7 @@ ndnsec-cert-install -f router1.cert
 5.1 为router2产生属于自己的router证书key，及未签名证书。
 ndnsec-key-gen -n /ndn/edu/pku/%C1.Router/router2 > unsigned_router2.cert
 5.2 将上面产生的未签名证书unsigned_router2.cert上传到router1节点，通过operator证书对其进行签名。
-ndnsec-cert-gen -s /ndn/edu/pku/%C1.Operator/op -p /ndn/edu/pku/%C1.Router/router2 -r unsigned_router2.cert > router2.cert
+ndnsec-cert-gen -N "project_name" -s /ndn/edu/pku/%C1.Operator/op -p /ndn/edu/pku/%C1.Router/router2 -r unsigned_router2.cert > router2.cert
 5.3 将签名后的router2.cert拷贝回router2节点。
 5.4 建议安装证书。
 ndnsec-cert-install -f router2.cert
@@ -140,7 +140,7 @@ router1: ndnsec-set-default /ndn/edu/centaur/%C1.Router/router1; nlsr -f nlsr.co
 router2: ndnsec-set-default /ndn/edu/centaur/%C1.Router/router2; nlsr -f nlsr.conf.router2
 {% endhighlight %}
 
-并通过`nfd-status`查看每个节点的RIB信息是否有对方节点的adversing prefix，如果未同步成功，我建议同步以下步骤debug。
+并通过`nfd-status`查看每个节点的RIB信息是否有对方节点的adversing prefix，如果未同步成功，我建议通过以下步骤debug。
 
 ### 证书链的错误排查
 nlsr是有运行日志的，默认文件是存储在`/var/log/nlsr/nlsr.log`。在基本设置时，建议你开启所有的日志选项，方便查错。查看日志，了解错误原因，如果是基本设置错误，重新设计一遍。如果看到不能获取某个证书的ERROR（尤其的广播证书）：
@@ -151,7 +151,7 @@ nlsr是有运行日志的，默认文件是存储在`/var/log/nlsr/nlsr.log`。�
 
 出现类似上面的错误，基本可以确定你的证书链产生中有错误，按以下步骤排查。
 
-首先，建议你回顾一下生成证书链及运行nlsr命令整个流程中，是否出现权限不一致的问题即：是否有些命令是通过sudo运行的；有些只是权限产生的。目前，nlsr认为sudo产生的证书并不属于普通的用户。如果存在这样的问题，你需要重新产生一次证书链，并保持整个流程权限一致。针对这个bug，下文会有详细的说明。
+首先，建议你回顾一下生成证书链及运行nlsr命令整个流程中，是否出现权限不一致的问题即：是否有些命令是通过sudo运行的；有些证书只是普通用户权限产生的。目前，nlsr认为sudo产生的证书并不属于普通的用户。如果存在这样的问题，你需要重新产生一次证书链，并保持整个流程权限一致。针对这个bug，下文会有详细的说明。
 
 其次，我们需要检查证书链的层次依赖关系是否正确。我们将使用`ndnsec-list`及`ndnsec-cert-dump`进行查询，注意这些命名也需要***保持权限一致***，不要用`sudo $COMMAND`去查看普通用户证书，反之亦然。查看节点上证书key的列表，正常的输出应该如下：
 
@@ -179,7 +179,7 @@ Certificate name:
   /ndn/edu/pku/%C1.Router/router1/KEY/ksk-1460797675386/ID-CERT/%FD%00%00%01T%1E_c1
 --
   Key Locator: (Self-Signed) /ndn/edu/pku/%C1.Router/router1/KEY/ksk-1460797675386/ID-CERT
-//注意：我没有手动安装router.cert，所以"Key Locator:"中显示是自签名的，摒弃key-id是自身的证书ID；如果执行了手动安装(Self-Signed)会变为(Name)，并且ked-id会变为它所依赖证书的签名即operator的ID。
+//注意：我没有手动安装router.cert，所以"Key Locator:"中显示是自签名的，并且key-id是自己的ID；如果执行了手动安装(Self-Signed)会变为(Name)，并且ked-id会变为它所依赖证书（operator）的ID。
   
 查看NLSR.cert:
 router1@debian:~$ ndnsec-cert-dump -i /ndn/edu/centaur/%C1.Router/router1/NLSR -p | grep -A 1 "Certificate name:\|Key Locator:"
@@ -187,13 +187,13 @@ Certificate name:
   /ndn/edu/centaur/%C1.Router/router1/NLSR/KEY/ksk-1461036117420/ID-CERT/%FD%00%00%01T%2C%89%EF%C3
 --
   Key Locator: (Name) /ndn/edu/centaur/%C1.Router/router1/KEY/ksk-1460797675386/ID-CERT
-//注意：NLSR.cert是执行nlsr后自动生成并安装的，开始时没有。此外观察它的"Key Locator:"信息，key-id不是自己的，而是router.cert的。
+//注意：NLSR.cert是执行nlsr后自动生成并安装的，运行nlsr之前没有。此外观察它的"Key Locator:"信息，key-id不是自己的，而是router.cert的。
 {% endhighlight %}
 
 再次强调不要用sudo执行查看命令，你会得到证书不存在错误`ERROR: certificate not found
 `。当然有时并没有错误，而且成功打印出证书信息，因为你曾经用`sudo`权限产生过该证书。请你仔细察看证书信息，会发现与普通权限执行`ndnsec-cert-dump`显示的信息并不相同，这是两个不同的证书。当然，如果你在证书链生成过程中，为每个证书执行了手动安装会避免同名冲突。
 
-基本上NLSR可能存在的坑，我已经详细说明了。如果你在配置过程中还存在问题，请仔细察看日志文件，定位错误。如果，不能解决我们可以进行交流。
+基本上NLSR可能存在的坑，我已经详细说明了。如果你在配置过程中还存在问题，请仔细察看日志文件，定位错误。欢迎交流！
 
 #### 自动生成证书链的脚本
 好吧！作为程序猿，这么麻烦的操作过程，当然需要写一个自动脚本喽！下面放出两个证书链生成脚本：masterGA.sh，slaverGA.sh。前者用于在一台机器上产生`root.cert`，`site.cert`，`operator.cert`，`router.cert`；后者用于在其它路由节点上产生`unsigned_root.cert`，并传至主机器上签名后拷贝回来。
@@ -269,10 +269,10 @@ ndnsec-set-default $router_key
 cd ..
 {% endhighlight %}
 
-大功告成？好像遗忘了什么，我们还没为每个路由节点的nlsr.conf配置相关证书位置呢！
+大功告成？好像遗忘了什么，我们还没为每个路由节点的nlsr.conf指定相关证书路径呢！
 
 ## nlsr安全配置
-我们还是以两个路由节点的例子来说明nlsr.conf文件，安全部分的配置。在产生`root.cert`，`site.cert`，`operator.cert`的节点，配置文件中需要指定这些证书的路径；当然我们也要为`router.cert`指定路径。通过`cert-to-publish`项指定，建议绝对路径形式。
+我们还是以两个路由节点的例子来说明nlsr.conf文件的安全项配置。在产生`root.cert`，`site.cert`，`operator.cert`的节点上，配置文件中需要指定这些证书的路径；当然也要为`router.cert`指定路径。`cert-to-publish`项用于证书路径配置，建议绝对路径形式。
 
 {% highlight vim%}
 cert-to-publish "/home/centaur/Workshop/NLSR/root.cert"
