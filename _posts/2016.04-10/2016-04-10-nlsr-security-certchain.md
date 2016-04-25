@@ -94,7 +94,7 @@ router1     router2  router3    router4  router5     router6  router7
 ###证书链的生成
 安装ndn-cxx库之后，会生成一系列证书相关命令。可以通过`ndnsec -help`查询用法，在此不在赘述。我们将以两个路由节点的“栗子”说明证书链产生的流程，和涉及的相关命令。两个路由节点分别为`router1`和`router2`。我们将在`router1`节点上产生整个同步域需要的`root`、`site`、`operator`证书；并为`router1`和`router2`分别产生各自的`router`证书。使用的各条命令参数及用法，通过`-help`都有详细说明。具体流程如下：
 
-{% highlight bash linenos%}
+{% highlight bash%}
 1. 在router1上，为域内所有的路由节点产生公用的root证书，它是自签名的。
 ndnsec-key-gen -n /ndn
 ndnsec-sign-req /ndn > root.cert
@@ -197,7 +197,7 @@ Certificate name:
 ###自动生成证书链的脚本
 好吧！作为程序猿，这么麻烦的操作过程，当然需要写一个自动脚本喽！下面放出两个证书链生成脚本：masterGA.sh，slaverGA.sh。前者用于在一台机器上产生`root.cert`，`site.cert`，`operator.cert`，`router.cert`；后者用于在其它路由节点上产生`unsigned_root.cert`，并传至主机器上签名后拷贝回来。
 
-{% highlight vim linenos%}
+{% highlight vim%}
 #!/bin/bash
 #author: ZhangXiang
 
@@ -234,7 +234,7 @@ ndnsec-set-default $router_key
 cd ..
 {% endhighlight %}
 
-{% highlight vim linenos%}
+{% highlight vim%}
 #!/bin/bash
 #author: ZhangXiang
 
