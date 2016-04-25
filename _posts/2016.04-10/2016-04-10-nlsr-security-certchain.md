@@ -25,7 +25,8 @@ NLSR是由NDN项目组开发的路由协议，现已在Testbed上进行使用。
 
 ## Security配置
 NLSR麻烦的地方在于，它需要为同步域构建一套完整的安全证书链。然而，奇怪的是官网只说了安装证书链的层次要求，没有详细的证书生成及配置说明。按照官网的思路，我们也先了解一下什么是证书链。
-###安全证书链
+
+### 安全证书链
 我们将整个网络视为一个同步域，路由协议主要的工作，其实是同步这个网络中路由节点的数据集（路由表信息）。目前NLSR数据同步时需要一套层次化的证书结构，进行身份验证。自顶向下整个证书链是一个树形的结构，包括四种安全证书：`rout`，`site`，`operator`，`router`，`route\NLSR`。
 
 ```
@@ -91,7 +92,7 @@ router1     router2  router3    router4  router5     router6  router7
 
 希望，大家留意上表中的命名层次。我们将在接下来的证书生成过程中，实践这一规则。
 
-###证书链的生成
+### 证书链的生成
 安装ndn-cxx库之后，会生成一系列证书相关命令。可以通过`ndnsec -help`查询用法，在此不在赘述。我们将以两个路由节点的“栗子”说明证书链产生的流程，和涉及的相关命令。两个路由节点分别为`router1`和`router2`。我们将在`router1`节点上产生整个同步域需要的`root`、`site`、`operator`证书；并为`router1`和`router2`分别产生各自的`router`证书。使用的各条命令参数及用法，通过`-help`都有详细说明。具体流程如下：
 
 {% highlight bash%}
@@ -141,7 +142,7 @@ router2: ndnsec-set-default /ndn/edu/centaur/%C1.Router/router2; nlsr -f nlsr.co
 
 并通过`nfd-status`查看每个节点的RIB信息是否有对方节点的adversing prefix，如果未同步成功，我建议同步以下步骤debug。
 
-###证书链的错误排查
+### 证书链的错误排查
 nlsr是有运行日志的，默认文件是存储在`/var/log/nlsr/nlsr.log`。在基本设置时，建议你开启所有的日志选项，方便查错。查看日志，了解错误原因，如果是基本设置错误，重新设计一遍。如果看到不能获取某个证书的ERROR（尤其的广播证书）：
 
 {% highlight bash%}
@@ -194,7 +195,7 @@ Certificate name:
 
 基本上NLSR可能存在的坑，我已经详细说明了。如果你在配置过程中还存在问题，请仔细察看日志文件，定位错误。如果，不能解决我们可以进行交流。
 
-###自动生成证书链的脚本
+### 自动生成证书链的脚本
 好吧！作为程序猿，这么麻烦的操作过程，当然需要写一个自动脚本喽！下面放出两个证书链生成脚本：masterGA.sh，slaverGA.sh。前者用于在一台机器上产生`root.cert`，`site.cert`，`operator.cert`，`router.cert`；后者用于在其它路由节点上产生`unsigned_root.cert`，并传至主机器上签名后拷贝回来。
 
 {% highlight vim%}
