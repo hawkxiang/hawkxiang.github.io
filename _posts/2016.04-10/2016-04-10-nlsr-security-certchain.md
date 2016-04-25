@@ -23,7 +23,7 @@ NLSR是由NDN项目组开发的路由协议，现已在Testbed上进行使用。
 
 基本的配置就说这么多，配置文件在那儿？如何启动nlsr？其它细节问题，多多查看官方说明。
 
-## Security配置
+## 产生证书链
 NLSR麻烦的地方在于，它需要为同步域构建一套完整的安全证书链。然而，奇怪的是官网只说了安装证书链的层次要求，没有详细的证书生成及配置说明。按照官网的思路，我们也先了解一下什么是证书链。
 
 #### 安全证书链
@@ -270,3 +270,35 @@ cd ..
 {% endhighlight %}
 
 大功告成？好像遗忘了什么，我们还没为每个路由节点的nlsr.conf配置相关证书位置呢！
+
+## nlsr安全配置
+我们还是以两个路由节点的例子来说明nlsr.conf文件，安全部分的配置。在产生`root.cert`，`site.cert`，`operator.cert`的节点，配置文件中需要指定这些证书的路径；当然我们也要为`router.cert`指定路径。通过`cert-to-publish`项指定，建议绝对路径形式。
+
+```
+cert-to-publish "/home/centaur/Workshop/NLSR/root.cert"
+cert-to-publish "/home/centaur/Workshop/NLSR/site.cert"
+cert-to-publish "/home/centaur/Workshop/NLSR/operator.cert"
+cert-to-publish "/home/centaur/Workshop/NLSR/router.cert"
+```
+
+在其它路由节点上，仅需要指定本节点的`router.cert`
+```
+cert-to-publish "/home/centaur/Workshop/NLSR/router.cert"
+```
+
+此外，我们需要将主节点上产生的`root.cert`和`site.cert`拷贝到域内所有的路由节点上。并在配置文件中`trust-anchor`里的`file-name`指定它们的路径:
+
+```
+trust-anchor
+{
+   type file
+   file-name "/home/centaur/Workshop/NLSR/root.cert"
+}
+trust-anchor
+{
+   type file
+   file-name "/home/centaur/Workshop/NLSR/site.cert"
+}
+```
+
+配置完成后，运行查看状态信息是否正确。
