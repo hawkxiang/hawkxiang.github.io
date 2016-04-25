@@ -121,7 +121,7 @@ ndnsec-cert-gen -N "project_name" -s /ndn/edu/pku/%C1.Operator/op -p /ndn/edu/pk
 4.3 建议安装证书。
 ndnsec-cert-install -f router1.cert
 
-///////////////////////////////////登陆至router2主机//////////////////////////////////////////
+//////////////////////////////登陆至router2主机//////////////////////////////////
 
 5.1 为router2产生属于自己的router证书key，及未签名证书。
 ndnsec-key-gen -n /ndn/edu/pku/%C1.Router/router2 > unsigned_router2.cert
