@@ -8,7 +8,7 @@ category:
     - 编程
 tags:
     - ndn
-    - cert
+    - security
 ---
 NLSR是由NDN项目组开发的路由协议，现已在Testbed上进行使用。NLSR的安装文档可以在官网上查看：[传送门](http://named-data.net/doc/NLSR/current/)。基本的安装流程网站上有详细的说明，一步步安装即可。NLSR的配置主要分为两个部分，邻居路由器节点的配置及安全证书链。
 
@@ -94,7 +94,7 @@ router1     router2  router3    router4  router5     router6  router7
 ###证书链的生成
 安装ndn-cxx库之后，会生成一系列证书相关命令。可以通过`ndnsec -help`查询用法，在此不在赘述。我们将以两个路由节点的“栗子”说明证书链产生的流程，和涉及的相关命令。两个路由节点分别为`router1`和`router2`。我们将在`router1`节点上产生整个同步域需要的`root`、`site`、`operator`证书；并为`router1`和`router2`分别产生各自的`router`证书。使用的各条命令参数及用法，通过`-help`都有详细说明。具体流程如下：
 
-```
+{% highlight bash linenos%}
 1. 在router1上，为域内所有的路由节点产生公用的root证书，它是自签名的。
 ndnsec-key-gen -n /ndn
 ndnsec-sign-req /ndn > root.cert
@@ -129,31 +129,32 @@ ndnsec-cert-gen -s /ndn/edu/pku/%C1.Operator/op -p /ndn/edu/pku/%C1.Router/route
 5.3 将签名后的router2.cert拷贝回router2节点。
 5.4 建议安装证书。
 ndnsec-cert-install -f router2.cert
-```
+{% endhighlight %}
 
 理论上上面操作成功后，两个节点的证书链已经生成成功。两个节点上运行nlsr:
 
-```
-设置节点的默认证书，并启动NLSR.
+{% highlight bash%}
+//设置节点的默认证书，并启动NLSR.
 router1: ndnsec-set-default /ndn/edu/centaur/%C1.Router/router1; nlsr -f nlsr.conf.router1
 router2: ndnsec-set-default /ndn/edu/centaur/%C1.Router/router2; nlsr -f nlsr.conf.router2
-```
+{% endhighlight %}
 
 并通过`nfd-status`查看每个节点的RIB信息是否有对方节点的adversing prefix，如果未同步成功，我建议同步以下步骤debug。
 
 ###证书链的错误排查
 nlsr是有运行日志的，默认文件是存储在`/var/log/nlsr/nlsr.log`。在基本设置时，建议你开启所有的日志选项，方便查错。查看日志，了解错误原因，如果是基本设置错误，重新设计一遍。如果看到不能获取某个证书的ERROR（尤其的广播证书）：
 
-```
+{% highlight bash%}
 "Validation Error: Cannot fetch cert: /ndn/broadcast/KEYS/ndn/edu/pku/%C1.Router/router2/KEY/ksk-1459155962653/ID-CERT "
-```
+{% endhighlight %}
+
 出现类似上面的错误，基本可以确定你的证书链产生中有错误，按以下步骤排查。
 
 首先，建议你回顾一下生成证书链及运行nlsr命令整个流程中，是否出现权限不一致的问题即：是否有些命令是通过sudo运行的；有些只是权限产生的。目前，nlsr认为sudo产生的证书并不属于普通的用户。如果存在这样的问题，你需要重新产生一次证书链，并保持整个流程权限一致。针对这个bug，下文会有详细的说明。
 
 其次，我们需要检查证书链的层次依赖关系是否正确。我们将使用`ndnsec-list`及`ndnsec-cert-dump`进行查询，注意这些命名也需要***保持权限一致***，不要用`sudo $COMMAND`去查看普通用户证书，反之亦然。查看节点上证书key的列表，正常的输出应该如下：
 
-```
+{% highlight bash%}
 router1上：
 * /ndn/edu/pku/%C1.Router/router1         //默认证书
   /localhost/operator
@@ -166,11 +167,11 @@ router2上：
 * /ndn/edu/pku/%C1.Router/router2
   /localhost/operator
   /ndn/edu/pku/%C1.Router/router2/NLSR  //执行NLSR后，会自动生成
-```
+{% endhighlight %}
 
 如果你在证书生成时手动安装了每一个证书（执行`ndnsec-cert-install -f $CERT_NAME`），那么证书之间可以看到明显的依赖关系。你可以通过`ndnsec-cert-dump -i $IDENTITY_NAME -p | grep -A 1 "Certificate name:\|Key Locator:"`查看每个节点上证书的依赖关系，这里的`$IDENTITY_NAME`是证书名字。当然如果你没有手动安装每个证书，可以通过查看路由节点上的`router.cert`与`NLSR.cert`的关系。我们只在router1上看一下二者的关系，当然我建议你检查所有证书。
 
-```
+{% highlight bash%}
 查看router.cert:
 router1@debian:~$ ndnsec-cert-dump -i /ndn/edu/pku/%C1.Router/router1 -p | grep -A 1 "Certificate name:\|Key Locator:"
 Certificate name:
@@ -186,7 +187,7 @@ Certificate name:
 --
   Key Locator: (Name) /ndn/edu/centaur/%C1.Router/router1/KEY/ksk-1460797675386/ID-CERT
 //注意：NLSR.cert是执行nlsr后自动生成并安装的，开始时没有。此外观察它的"Key Locator:"信息，key-id不是自己的，而是router.cert的。
-```
+{% endhighlight %}
 
 再次强调不要用sudo执行查看命令，你会得到证书不存在错误`ERROR: certificate not found
 `。当然有时并没有错误，而且成功打印出证书信息，因为你曾经用`sudo`权限产生过该证书。请你仔细察看证书信息，会发现与普通权限执行`ndnsec-cert-dump`显示的信息并不相同，这是两个不同的证书。当然，如果你在证书链生成过程中，为每个证书执行了手动安装会避免同名冲突。
@@ -196,7 +197,7 @@ Certificate name:
 ###自动生成证书链的脚本
 好吧！作为程序猿，这么麻烦的操作过程，当然需要写一个自动脚本喽！下面放出两个证书链生成脚本：masterGA.sh，slaverGA.sh。前者用于在一台机器上产生`root.cert`，`site.cert`，`operator.cert`，`router.cert`；后者用于在其它路由节点上产生`unsigned_root.cert`，并传至主机器上签名后拷贝回来。
 
-```
+{% highlight vim linenos%}
 #!/bin/bash
 #author: ZhangXiang
 
@@ -231,10 +232,9 @@ ndnsec-cert-gen -N "project_name" -s $operator_key -p $router_key -r unsigned_ro
 
 ndnsec-set-default $router_key
 cd ..
+{% endhighlight %}
 
-```
-
-```
+{% highlight vim linenos%}
 #!/bin/bash
 #author: ZhangXiang
 
@@ -266,15 +266,6 @@ scp -r ${username}@${master_ip}:${dir} .
 
 ndnsec-set-default $router_key
 cd ..
-```
-
-大功告成！
-
-{% highlight C++ linenos%}
-int main() {
-	auto hashlambda = [](const pair<int, int>& i) -> size_t{return i.first ^ i.second;};
-	unordered_map<pair<int, int>, int, decltype(hashlambda)> lam_map;
-	lam_map[make_pair(1, 2)]++;
-	return 0;
-}
 {% endhighlight %}
+
+OK，大功告成！
