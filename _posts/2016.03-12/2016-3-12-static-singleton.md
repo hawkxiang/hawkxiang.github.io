@@ -5,92 +5,73 @@ author: hawker
 permalink: /2016/03/12/static-singleton.html
 date: 2016-03-12 20:04:00
 category:
-    - C
+    - 编程
 tags:
-    - static
-    - Singleton
+    - cpp
+    - design pattern
 ---
-服务器数据同步备份是常见的容灾需求，我的实验室一台Web服务器需要定时备份网站相关数据至备份服务器上。今天谈谈同步备份的实现。介绍中我们将待备份的Web服务器视作`ClientA`，存储备份数据的服务器称作`ServerB`。
+今天我们来聊一聊C++中的static修饰符，并通过单例模式说明static的作用。
 
-### SSH免密码登录设置
+### 程序的内存结构
 
-在介绍同步实现细节之前，我们有必要讨论一下如何实现SSH免密码登录。在周期运行的脚本中`(crontab)`，实现远程登录时手动输入登录口令是不可取的。在我们的同步脚本中，`ClientA`需要远程无密码的登录至`ServerB`。首先，在`ClientA`上生成用户sjd_backup登录用的公、私密钥，并将公钥传输给`ServerB`。
+进入主题之前，我们首先看看一段C/C++程序的内存分配情况。
 
-{% highlight Vim %}
-#创建新的密钥
-[clientA_backup@localhost ~]$ ssh-keygen
-#对于出现的选项，一直回车，使用默认设置创建密钥。
-	
-#查看密钥是否创建成功
-[clientA_backup@localhost ~]$ ls -ld ~/.ssh; ls -l ~/.ssh
-drwx------ 2 clientA_backup clientA_backup 4096 1月 30 02:36 /home/sjd_backup/.ssh
--rw------- 1 clientA_backup clientA_backup 1679 1月 30 02:36 id_rsa
--rw-r--r-- 1 clientA_backup clientA_backup 410 1月 30 02:36 id_rsa.pub
-{% endhighlight %}
-
-id_rsa是私钥，用户sjd_backup自己拥有读写权限；id_rsa.pub是公钥，将被传输给`ServerB`。注意创建的密钥文件权限需要正确，~/.ssh/目录应该是700。下面需要将id_rsa.pub传给`ServerB`即可：
-	
-{% highlight Vim%}
-[clientA_backup@localhost ~]$ sftp serverB_backup@xxx.xxx.xxx.xxx  <==ServerB的IP地址。
-> put ~/.ssh/id_rsa.pub
-
-{% endhighlight %}
-	
-接下来我们登录到`ServerB`,更具它的sshd_config中的AuthorizedKeysFile配置选项，找到authorized_keys文件，并将`ClientA`传递过来的公钥id_rsa.pub内容附加到authorized_keys中。
-
-{% highlight Vim %}
-#查看ssh配置文件，确定authorized_keys位置
-[serverB_backup@localhost ~]$ vim /etc/ssh/sshd_config
-	
-#如果是新用户，不存在authorized_keys文件，需要手动创建.ssh目录存放authorized_keys文件
-[serverB_backup@localhost ~]$ mkdir .ssh; chmod 700 .ssh
-	
-#确认ClientA发来的公钥id_rsa.pub是否已经收到
-[serverB_backup@localhost ~]$ ls -l *pub
--rw-r--r-- 1 serverB_backup serverB_backup 410 1月 30 02:36 id_rsa.pub <==确实有存在
-	
-#将公钥id_rsa.pub内容附加到authorized_keys中。
-[serverB_backup@localhost ~]$ cat id_rsa.pub >> .ssh/authorized_keys
-[serverB_backup@localhost ~]$ chmod 644 .ssh/authorized_keys
-{% endhighlight %}
-	
-完成上面`ServerB`的设置后，确认权限是否正确。此时，回到`ClientA`切换到clientA_backup身份即可实现无需密码SSH登录到`ServerB`。
-
-{% highlight Vim %}
-[clientA_backup@localhost ~]$ ssh serverB_backup@xxx.xxx.xxx.xxx  <==ServerB的IP地址。
-Last login: .............          <==确认可以无密码登录
-{% endhighlight %}
-	
-### 同步备份
-我们将使用`rsync`配合`crontab`进行两台机器间的数据备份。`rsync`的基本用法如下，具体的选项和参数可以参考man中的说明：
-
-{% highlight Vim %}
-[clientA_backup@localhost ~]$ rsync [-avrlptgoD] [source] [destination]
-{% endhighlight %}
-	
-我们将备份`ClientA`中文件夹`/var/www/html`下所有的文件，以及mysql数据库文件，备份脚本参考下面
-
-{% highlight Vim %}
-[clientA_backup@localhost ~]$ vim backup_www.sh
-
-#!/bin/bash
-remotedir=/var/www
-localdir=/var/www/html
-remoteip="xxx.xxx.xxx.xx"      <==根据自己的情况设置
-	
-mysqldump -uuser -ppassword sjd > /var/www/html/sjd.sql  <==导出数据库文件
-#同步备份命令
-rsync -avl --delete ${localdir} serverB_backup@${remoteip}:${remotedir}
-{% endhighlight %}
-	
-运行脚本，查看是否可以成功将`ClientA`中文件夹`/var/www/html`下所有的文件，备份至`ServerB`下的`/var/www/html`中。需要主要的是，`rsync`中涉及的用户应该是对应同步目录的拥有者，可以避免备份时时间修改存在的权限问题。
-
-验证脚本正常后，运行`crontab -e`将脚本设置为每天凌晨循环执行的作业。
-{% highlight Vim %}
-0 1 * * * /home/clientA_backup/backup_www.sh
-{% endhighlight %}
-	
 ![程序内存分配](/upload/2016/03/c_memory.png)
-OK！大功告成，一切都可以正常的运行，数据可以正常的容灾备份啦！
+
+图中，程序的二进制代码是存放在静态存储区。C/C++中的全局变量和静态变量都是存储在数据区中，需要强调的是不论static变量的作用域如何，变量的内存位置都在数据区中（而非函数栈上）。这也很容易解释为何函数中的局部静态变量在函数退出后依然存在，并不会随着函数退出消亡（析构）。
+
+### static修饰符
+
+static的主要作用是限定变量或函数为静态存储。如果用static限定全局变量与函数，则可以将该对象的作用域限定为被编译源文件的剩余部分。通过static限定全局变量，可以达到隐藏外部对象的目的。因而，static限定的变量或函数不会和同一程序中其它文件中同名的相冲突。如果用static限定函数局部变量，则该变量从程序一开始就拥有内存，不会随其所在函数的调用和退出而分配和消失。在类中，静态成员可以实现多个对象之间的数据共享，并且使用静态数据成员还不会破坏隐藏的原则，即保证了安全性。
+
+静态变量或者静态函数的好处：
+
+1. 对于类成员static变量，可以节省内存，所用对象共享该数据。
+2. 静态函数会被自动分配在一个一直使用的存储区，直到退出应用程序实例，避免了调用函数时压栈出栈，速度快很多。
+3. 关键字“static”，译成中文就是“静态的”，所以内部函数又称静态函数。但此处“static”的含义不是指存储方式，而是指对函数的作用域仅局限于本文件。 使用内部函数的好处是：不同的人编写不同的函数时，不用担心自己定义的函数，是否会与其它文件中的函数同名，因为同名也没有关系。
+
+在类中使用static时，需要注意以下事项：
+
+1. 类的静态成员函数是属于整个类而非类的对象，所以它没有this指针，这就导致了它仅能访问类的静态数据和静态成员函数。
+2. 不能将静态成员函数定义为虚函数。
+3. 由于静态成员声明于类中，操作于其外，所以对其取地址操作，就多少有些特殊，变量地址是指向其数据类型的指针，函数地址类型是一个“nonmember函数指针”。
+4. 由于静态成员函数没有this指针，所以就差不多等同于nonmember函数，结果就产生了一个意想不到的好处：成为一个callback函数，使得我们得以将C++和C-based X Window系统结合，同时也成功的应用于线程函数身上。
+5. static并没有增加程序的时空开销，相反她还缩短了子类对父类静态成员的访问时间，节省了子类的内存空间。
+6. 静态数据成员在<定义或说明>时前面加关键字static。
+7. static变量作为类的成员时，类中只是声明，需要在类外对该变量进行初始化。并且，static成员不属于对象，而是属于对应的类。
+8. C++中局部静态对象在程序的执行路径第一次经过对象定义语句时初始化，并且直到程序终止才被销毁，类成员函数中亦是如此。
+
+全局变量以及全局变量与静态变量的关系：
+
+顾名思义，全局变量是指能够在全局引用的变量，相对于局部变量的概念，也叫外部变量；同静态变量一样，全局变量位于静态数据区，全局变量一处定义，多处引用，用关键字“extern”引用“外部”的变量。
+
+全局变量也可以是静态的，在前面有过说明，静态全局变量的意义就是不让“外部”引用，是单个源文件里的全局变量，即是编译阶段的全局变量，而不是连接阶段的全局变量。
+
+### static实现单例模式（懒汉）
+单例模式是我们经常使用到的设计模式，例如：应用程序的日志应用、数据库连接池、线程池等场景。那么C++中如何实现单例模式呢？我们已经提到C++中成员函数的静态变量特点：静态局部变量在第一次经过定义语句时初始化，知道程序终止时才会销毁。这种特性使得C++能够轻松的实现单例，话不多说直接看单例模式代码：
+
+
+{% highlight C++ %}
+class Singleton {
+public:
+	Singleton(const Singleton&) = delete;             //阻止拷贝
+	Singleton &operator=(const Singleton&) = delete;  //阻止赋值
+
+	static Singleton& getInstance() {
+		static Singleton m_instance;
+		return m_instance;
+	}
+private:
+	Singleton() = default;
+	~Singleton() = default;
+}
+
+int main() {
+	Singleton &s1 = Singleton::GetInstance();
+	Singleton &s2 = Singleton::GetInstance(); //s1与s2是同一对象的引用
 	
-	
+	return 0;
+}
+{% endhighlight %}
+
+这里需要注意的是，C++0X以后，要求编译器保证内部静态变量的线程安全性，可以不加锁。但C++0X以前，需要手动加锁。
