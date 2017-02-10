@@ -20,7 +20,7 @@ Golang的内存模型比较复杂，同时也非常重要。理解Go的内存模
 
 为了证明理解内存模型的重要性，先看一个例子。下面一小段代码：
 
-{% highlight %}
+```
 package main
 
 import (
@@ -45,13 +45,13 @@ func main() {
   }
   wg.Wait()
 }
-{% endhighlight %}
+```
 
 以上代码有没有什么问题？这里把buffered channel作为semaphore来使用，表面上看最多允许一个goroutine对count进行++和--，但其实这里是有bug的。根据Go语言的内存模型，对count变量的访问并没有形成临界区。编译时开启竞态检测可以看到这段代码有问题：
 
-{% highlight %}
+```
 go run -race test.go
-{% endhighlight %}
+```
 
 编译器可以检测到16和18行是存在竞态条件的，也就是count并没像我们想要的那样在临界区执行。继续往下看，读完本文，回头再来看就可以明白为什么这里有bug了。bug解释：Golang的内存模型只保证15行Channel写一定happens-before19行Channel读（即使在不同Goroutine之间），但是不同Goroutine的16-18行之间根本没保证happens-before关系。因此编译器实际如果排布不同Goroutine间16-18行的代码执行没法保证，因此，上面代码没有形成临界代码段。
 
@@ -63,7 +63,7 @@ happens-before是编程语言中的一种术语，并非Golang独有。简单的
 
 无论使用哪种编程语言，有一点是相同的：如果操作A和B在相同的线程中执行，并且A操作的声明在B之前，那么A happens-before B。
 
-{% highlight %}
+```
 int A, B;
 void foo()
 {
@@ -72,7 +72,7 @@ void foo()
   // ... effectively becomes visible before the following loads. Duh!
   B = A * A;
 }
-{% endhighlight %}
+```
 
 还有一点是，在每门语言中，无论你使用那种方式获得，happens-before关系都是可传递的：如果A happens-before B，同时B happens-before C，那么A happens-before C。当这些关系发生在不同的线程中，传递性将变得非常有用。
 
@@ -86,7 +86,7 @@ void foo()
 ## `A` happens-before `B`并不意味着时序上`A`在`B`之前发生
 这里有个例子，其中的操作具有happens-before关系，但是实际上并不一定是按照那个顺序发生的。下面的代码执行了(1)对A的赋值，紧接着是(2)对B的赋值。
 
-{% highlight %}
+```
 int A = 0;
 int B = 0;
 void main()
@@ -94,15 +94,15 @@ void main()
     A = B + 1; // (1)
     B = 1; // (2)
 }
-{% endhighlight %}
+```
 
 根据前面说明的规则，(1) happens-before (2)。但是，如果我们使用gcc -O2编译这个代码，编译器将产生一些指令重排序。有可能执行顺序是这样子的：
 
-{% highlight %}
+```
 将B的值取到寄存器
 将B赋值为1
 将寄存器值加1后赋值给A
-{% endhighlight %}
+```
 
 也就是到第二条机器指令(对B的赋值)完成时，对A的赋值还没有完成。换句话说，(1)并没有在(2)之前发生!
 那么，这里违反了happens-before关系了吗？让我们来分析下，根据定义，操作(1)对内存的影响必须在操作(2)执行之前对其可见。换句话说，对A的赋值必须有机会对B的赋值有影响.+
@@ -112,7 +112,7 @@ void main()
 ###  时序上`A`在`B`之前发生并不意味着`A` happens-before `B`
 下面这个例子中，所有的操作按照指定的顺序发生，但是并能不构成happens-before 关系。假设一个线程调用pulishMessage，同时，另一个线程调用consumeMessage。 由于我们并行的操作共享变量，为了简单，我们假设所有对int类型的变量的操作都是原子的。
 
-{% highlight %}
+```
 int isReady = 0;
 int answer = 0;
 void publishMessage()
@@ -125,7 +125,7 @@ void consumeMessage()
   if (isReady) // (3) <-- Let's suppose this line reads 1
   printf("%d\n", answer); // (4)
 }
-{% endhighlight %}
+```
 
 根据程序的顺序，在(1)和(2)之间存在happens-before 关系，同时在(3)和(4)之间也存在happens-before关系。
 除此之外，我们假设在运行时，isReady读到1(是由另一个线程在(2)中赋的值)。在这中情形下，我们可知(2)一定在(3)之前发生。但是这并不意味着在(2)和(3)之间存在happens-before 关系!+
@@ -151,7 +151,7 @@ happens-before 关系只在语言标准中定义的地方存在，这里并没�
 
 先看一个简单的例子
 
-{% highlight %}
+```
 var c = make(chan int, 10)
 var a string
 func f() {
@@ -163,13 +163,13 @@ func main() {
     <-c   // (3)
     print(a)  // (4)
 }
-{% endhighlight %}
+```
 
 上述代码可以确保输出"hello, world"，因为(1) happens-before (2)，(4) happens-after (3)，再根据上面的第一条规则(2)是 happens-before (3)的，最后根据happens-before的可传递性，于是有(1) happens-before (4)，也就是a = "hello, world" happens-before print(a)。
 
 再看另一个例子：
 
-{% highlight %}
+```
 var c = make(chan int)
 var a string
 func f() {
@@ -181,13 +181,13 @@ func main() {
     c <- 0  // (3)
     print(a)  // (4)
 }
-{% endhighlight %}
+```
 
 根据上面的第三条规则(2) happens-before (3)，最终可以保证(1) happens-before (4)。
 
 如果我把上面的代码稍微改一点点，将c变为一个带缓存的channel，则print(a)打印的结果不能够保证是"hello world"。
 
-{% highlight %}
+```
 var c = make(chan int, 1)
 var a string
 func f() {
@@ -199,6 +199,6 @@ func main() {
     c <- 0  // (3)
     print(a)  // (4)
 }
-{% endhighlight %}
+```
 
 因为这里不再有任何同步保证，使得(2) happens-before (3)。可以回头分析一下本节最前面的例子，也是没有保证happens-before条件。
