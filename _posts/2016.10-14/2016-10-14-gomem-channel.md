@@ -49,7 +49,7 @@ func main() {
 
 以上代码有没有什么问题？这里把buffered channel作为semaphore来使用，表面上看最多允许一个goroutine对count进行++和--，但其实这里是有bug的。根据Go语言的内存模型，对count变量的访问并没有形成临界区。编译时开启竞态检测可以看到这段代码有问题：
 
-{% highlight go lineanchors %}
+{% highlight bash linenos %}
 go run -race test.go
 {% endhighlight %}
 
