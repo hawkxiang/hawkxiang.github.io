@@ -49,9 +49,9 @@ func main() {
 
 以上代码有没有什么问题？这里把buffered channel作为semaphore来使用，表面上看最多允许一个goroutine对count进行++和--，但其实这里是有bug的。根据Go语言的内存模型，对count变量的访问并没有形成临界区。编译时开启竞态检测可以看到这段代码有问题：
 
-```
+{% highlight Go%}
 go run -race test.go
-```
+{% endhighlight %}
 
 编译器可以检测到16和18行是存在竞态条件的，也就是count并没像我们想要的那样在临界区执行。继续往下看，读完本文，回头再来看就可以明白为什么这里有bug了。bug解释：Golang的内存模型只保证15行Channel写一定happens-before19行Channel读（即使在不同Goroutine之间），但是不同Goroutine的16-18行之间根本没保证happens-before关系。因此编译器实际如果排布不同Goroutine间16-18行的代码执行没法保证，因此，上面代码没有形成临界代码段。
 
