@@ -20,7 +20,7 @@ Golang的内存模型比较复杂，同时也非常重要。理解Go的内存模
 
 为了证明理解内存模型的重要性，先看一个例子。下面一小段代码：
 
-```
+{% highlight bash%}
 package main
 
 import (
@@ -45,7 +45,7 @@ func main() {
   }
   wg.Wait()
 }
-```
+{% endhighlight %}
 
 以上代码有没有什么问题？这里把buffered channel作为semaphore来使用，表面上看最多允许一个goroutine对count进行++和--，但其实这里是有bug的。根据Go语言的内存模型，对count变量的访问并没有形成临界区。编译时开启竞态检测可以看到这段代码有问题：
 
