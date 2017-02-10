@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Golang内存模型之Channel
+title: Go语言内存模型之Channel
 author: hawker
 permalink: /2016/10/gomem-channel.html
 date: 2016-10-13 18:00:00
