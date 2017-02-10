@@ -20,7 +20,7 @@ Golang的内存模型比较复杂，同时也非常重要。理解Go的内存模
 
 为了证明理解内存模型的重要性，先看一个例子。下面一小段代码：
 
-{% highlight linenos %}
+{% highlight go linenos %}
 package main
 
 import (
