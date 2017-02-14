@@ -36,4 +36,4 @@ Raft算法中将集群中的服务器分为3种角色：
 2. Follower: 接收Leader或者Candidate发送的RPC消息，并进行相应的处理。选举时钟超时后，将切换为Candidate身份。新加入的Server都是Follower状态。
 3. Candidate：由Follower超时转换而来的中间状态，获得集群中大部分投票后转变为Leader。
 下图为Raft中Server的状态转换图：
-<img src="upload/2016/11/raftstate.png" alt=“Alt text” title="Raft_State"/>
+<img src="/upload/2016/11/raftstate.png" alt=“Alt text” title="Raft_State"/>
