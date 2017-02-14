@@ -40,4 +40,4 @@ Raft算法中将集群中的服务器分为3种角色：
 
 下图为Raft中Server的状态转换图：
 
-<center><img src="/upload/2016/11/raftstate.png" alt=“Alt text” title="Raft_State"/></center>
+<center>![Alt texxt](/upload/2016/11/raftstate.png "Raft_State")</center>
