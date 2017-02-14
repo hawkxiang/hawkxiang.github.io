@@ -25,3 +25,8 @@ google的一篇[分布系统介绍](http://www.hpcs.cs.tsukuba.ac.jp/~tatebe/lec
 
 
 ## 晦涩的Paxos
+Paxos算法是莱斯利·兰伯特于1990年提出的一种基于消息传递的一致性算法。初期Lamport用比较诙谐的语言描述Paxos，但会议审稿者一致无法接收Lamport的幽默感，Lamport又于2001年用学术化的语言重新描述了Paxos，也算是Paxos一段趣闻。Chubby是google的一个面向松耦合分布系统的锁服务，它使用Paxos作为一致性算法。但是Paxos的主要问题是晦涩难以理解，同时难以程序实现。初学者需要花费大量时间去弄懂“Basic Paxos”，“Multi Paxos”更是令人云里雾里。最近，微信开源了一套C++实现的Paxos算法，感兴趣的朋友可以去了解一下。
+
+与Paxos不同，Raft算法在设计之初就强调可理解性（Understandable），Understandable也是Raft设计过程中主要准则。
+
+## Raft算法概述
