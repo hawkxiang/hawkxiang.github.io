@@ -33,12 +33,53 @@ Paxos算法是莱斯利·兰伯特于1990年提出的一种基于消息传递的
 
 Raft算法中将集群中的服务器分为3种角色：
 
-1. Leader：Client向Leader发送请求，Leader将需要备份的日志信息广播给集群中其他Servers，同一个Terms集群中只有一个Leader。
-2. Follower: 接收Leader或者Candidate发送的RPC消息，并进行相应的处理。选举时钟超时后，将切换为Candidate身份。新加入的Server都是Follower状态。
+1. Leader：Client向Leader发送请求，Leader将需要备份的日志信息广播给集群中其他Servers，同一个Terms集群中只有一个Leader。同时，Leader会周期性的广播心跳包，告诉其他Follower当前的Leader正常工作，重置其他Follower的选举时钟。
+2. Follower: 接收Leader或者Candidate发送的RPC消息，并进行相应的处理。选举时钟超时后，将切换为Candidate身份。新加入的Server都是Follower状态。Follower长时间收不到Leader的心跳包，选举时钟超时，自己变成Candidate开启选举。
 3. Candidate：由Follower超时转换而来的中间状态，获得集群中大部分投票后转变为Leader。
 
 
 下图为Raft中Server的状态转换图：
 
 ![Alt text](/upload/2016/11/raftstate.png "Raft_State")
-![Alt text](http://kresnikwang.github.io/assets/media/06-2015/kresnikwang.github.io.png)
+
+## Raft中的Terms
+Raft中用Term的概念来表示一个工作周期。众所周知，分布式环境下缺乏统一的全局时钟，“时间同步”本身是一个很大的难题。同时，分布式系统中由网络的不可靠性存在大量的过期消息，为了识别过期消息，时间信息又是必不可少的。Raft针对这个问题，将集群的工作时间切分为一个个的Term，相当于一个周期这样的“时间概念”。如下图所示：
+
+![Alt text](/upload/2016/11/term.png "Term")
+
+Term开始于选举，终止与下一次选举，对于每一个节点而已Term都是单调递增的。
+
+1. 一般情况下每个Term都要一个Leader，且只有一个Leader。
+2. 当然，某些Term可能不存Leader，此时可能是该Term内的选举失败，超时进入下一个Term选举所导致的的。
+3. 每个Server收到的RPC消息中都带有Term标识，如果收到的消息中Term大于本地的currentTerm，server将将currentTerm设为消息中的Term，并将自身的状态切换为Follower。
+
+## 选举
+
+选举时钟超时，Server的状态从Follower（或Candidate）切换为Candidate。自增本地的currentTerm，并将VoteFor设置为自身，重置选举定时器，向集群中的其他机器发起RequestVote RPC, 直到出现以下条件：
+
+1. 获得集群中大部分参与者的投票，一般是半数以上，保证一个Term中选举仅有一个Leader产生。此时，状态转换为Leader，广播Heartbeats给其他Servers，终止他们的选举。
+2. 接收到合法的AppendEntries RPC，即消息的Term大于等于自身，转换为Follower状态。
+3. 选举超时，自增currentTerm进入下一个Term的选举。这种情况主要是由于集群中两个candidate同时发起选举（split vote）,导致两个candidate都无法获得足够的选票所致。所以，每次选举开始进行重置选举定时器时，时间都是随机值（150ms-300ms），这样保证下一次选举两个冲突的candidate不会再次同时开始选举。
+4. Follower收到一个RequestVote RPC时，首先查看其Term是否大于本地的currentTerm（合法性）。然后检查RequestVote消息中携带的对方日志LastIndex和LastTerm是否比本地的日志更新。满足这些条件，Follower才返回投票，否则拒绝投票
+
+## 日志备份与协商
+
+分布式系统能够保证可靠性和容错的主要原因是：利用日志顺序记录改变State Machine的相关命令，并保持集群中的所有servers中的Logs都是一致的。下图是Raft添加日志和协商实现集群中Servers日志一致的过程：
+
+![Alt text](/upload/2016/11/log.png "Term")
+
+首先，请大家记住Raft一下几个属性，他们保证了Raft在日志同步，或者增加过程中始终能够保持一致。
+
+1. Election Safety: at most one leader can be elected in a given term.(一个Term内，最多选举出一个Leader)
+2. Leader Append-Only: a leader never overwrites or deletes entries in its log; it only appends new entries.(Leader本身不会重写或者删除自己本地的日志，仅仅会进行增加操作)
+3. Log Matching: if two logs contain an entry with the same index and term, then the logs are identical in all entries up through the given index.（如果两台Server中的日志，相同的Index对应的日志项Term相同，那么两个日志Index前面的日志项都相同）
+4. Leader Completeness: if a log entry is committed in a given term, then that entry will be present in the logs of the leaders for all higher-numbered terms.（如果某个Server提交了一个日志，即在执行了日志中对应的操作。其他的servers在对应的Index将会执行相同的日志项）
+5. State Machine Safety: if a server has applied a log entry at a given index to its state machine, no other server will ever apply a different log entry for the same index.
+
+为什么有了以上5条就能保持日志的一致性，请大家阅读Raft原文。证明比较长，而且担心我的描述会引起您理解歧义。故而推荐阅读原文。
+
+当Leader收到来自Client的请求时，他将通过以下流程进行处理。
+
+1. Leader将日志Append到本地。
+2. 发送AppendEntriesRPC给Followers，将日志发给它们。（这里需要使用nextIndex[i]获取每个Follower需要发送的日志项）
+3. 如果超过大多数的Followers回复了Leader，则Leader可以提交这条日志。（不用等到所以Followers反馈，提高系统整体性能）
