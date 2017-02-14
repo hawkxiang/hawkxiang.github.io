@@ -32,9 +32,12 @@ Paxos算法是莱斯利·兰伯特于1990年提出的一种基于消息传递的
 ## Raft算法中服务器状态
 
 Raft算法中将集群中的服务器分为3种角色：
+
 1. Leader：Client向Leader发送请求，Leader将需要备份的日志信息广播给集群中其他Servers，同一个Terms集群中只有一个Leader。
 2. Follower: 接收Leader或者Candidate发送的RPC消息，并进行相应的处理。选举时钟超时后，将切换为Candidate身份。新加入的Server都是Follower状态。
 3. Candidate：由Follower超时转换而来的中间状态，获得集群中大部分投票后转变为Leader。
+
+
 下图为Raft中Server的状态转换图：
 
 <center><img src="/upload/2016/11/raftstate.png" alt=“Alt text” title="Raft_State"/></center>
