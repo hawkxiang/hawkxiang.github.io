@@ -22,4 +22,6 @@ google的一篇[分布系统介绍](http://www.hpcs.cs.tsukuba.ac.jp/~tatebe/lec
 
 
 目前，解决分布式系统一致性问题的方法主要有：二阶段提交(2PC)、三阶段提交(3PC)、一致性算法(Paxos, Raft)等。
+
+
 ## 晦涩的Paxos
