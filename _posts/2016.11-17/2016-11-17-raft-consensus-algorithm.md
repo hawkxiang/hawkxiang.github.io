@@ -10,7 +10,7 @@ tags:
     - distributed-system
     - algorithm
 ---
-一致性问题一直是分布式系统的核心问题，Raft针对该问题设计了基于日志的可容错的一致性算法。本文将详细说明Raft一致性算法的原理。[参考论文](https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf)
+一致性问题一直是分布式系统的核心问题，Raft针对该问题设计了基于日志的可容错的一致性算法。本文将简单说明Raft一致性算法的原理。[参考论文](https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf)
 
 ## 分布式系统的特性
 由于空间分割、网络不稳定性、机器设备不可靠性，与集中式系统不同分布式系统有如下几个特性：
