@@ -66,7 +66,7 @@ Term开始于选举，终止与下一次选举，对于每一个节点而已Term
 
 分布式系统能够保证可靠性和容错的主要原因是：利用日志顺序记录改变State Machine的相关命令，并保持集群中的所有servers中的Logs都是一致的。下图是Raft添加日志和协商实现集群中Servers日志一致的过程：
 
-![Alt text](/upload/2016/11/log.png "Term")
+![Alt text](/upload/2016/11/log.png "Append")
 
 首先，请大家记住Raft一下几个属性，他们保证了Raft在日志同步，或者增加过程中始终能够保持一致。
 
@@ -80,6 +80,27 @@ Term开始于选举，终止与下一次选举，对于每一个节点而已Term
 
 当Leader收到来自Client的请求时，他将通过以下流程进行处理。
 
+Leader:
+
 1. Leader将日志Append到本地。
 2. 发送AppendEntriesRPC给Followers，将日志发给它们。（这里需要使用nextIndex[i]获取每个Follower需要发送的日志项）
 3. 如果超过大多数的Followers回复了Leader，则Leader可以提交这条日志。（不用等到所以Followers反馈，提高系统整体性能）
+4. 如果Follower返回false，要么当前的Leader失效，需要转换为Follower状态；要么Leader发送的Log下表与Follower不匹配，这时需要递减nextIndex[i]直到遇到一个二者日志匹配的Index。
+
+Follower:
+
+1. 接收AppendEntriesRPC消息，如果消息本身携带的Term小于Follower节点的CurrentTerm返回false。
+2. 如果AppendEntriesRPC消息携带的日志Index及日志Term，能在Follower本地日志Index处找到的日志项Term相同，则将收到的日志加入Follower本地日志中，否则返回false。
+
+当然，以上描述的内容都是基本的日志添加处理流程。由于设备的重启、网络故障引起的一些极端的日志协商情况，需要一些特别的处理方法，我们在此不在详述。
+
+## 日志压缩
+随着系统的持续运转，节点中的日志信息不断膨胀，影响节点恢复时状态重放的效率，同时也制约日志查找性能。因此，日志压缩是比不可少的功能。分布式系统中有多种压缩策略，Raft采用了快照（Snapshot）的形式进行日志压缩。当上层应用apply日志时，会侦测到节点日志的长度，如果太大向Raft发送日志压缩命令。Raft在本地执行日志压缩，将已经提交并且Apply的日志截断之前的状态(state machine）作成快照，保留快照后面的日志信息。基本情况如下图：
+
+![Alt text](/upload/2016/11/snapshot.png "Snapshot")
+
+快照一方面有效的节省了存储空间，另一方面当新加入的节点状态落后Leader很多时，一次快照恢复即可快速追上当前Leader的状态，提高系统整体恢复性能。
+
+## 其他问题
+
+我在这里仅仅谈了一些Raft算法中比较核心的部分，还有诸如集群配置动态变化处理、客户端与Raft交互等内容没有介绍。感兴趣的朋友应该去阅读原文，系统的掌握Raft算法得工作流程。接下来的文章我将说明如何用Go语言实现一个Raft算法，并基于Raft算法实现一个分布式可容错的键值存储系统。
