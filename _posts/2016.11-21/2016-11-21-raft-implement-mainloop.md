@@ -70,7 +70,7 @@ tags:
 
 谈完了整体的事件循环，我们在看一看Goroutine2中执行提交Log的代码实现。这段代码首先使用copy_on_write技术，将当前内存中的Log_List拷贝一份，快速释放锁。然后，遍历已经提交的Log并且包装成ApplyMsg进行提交。你可能要问为什么要copy_on_wirte，不是浪费很多内存嘛？其实，这里也是一种权衡。要知道，rf.Log在多个Goroutine中使用肯定需要锁，Goroutine1里的事件循环不断的对rf.Log进行增加/删除。如果，Goroutine2在遍历日志，提交过程中加锁，Goroutine1中的事件循环会被阻塞很久。而且，Goroutine2提交很耗时，而且可能阻塞很久。所以，权衡使用copy_on_write去避免Goroutine1里的事件循环阻塞。
 
-{% highlight Go linenos%}
+{% highlight Go %}
 	func (rf *Raft) applyLoop() {
 	for rf.state != Stopped {
 		select {
