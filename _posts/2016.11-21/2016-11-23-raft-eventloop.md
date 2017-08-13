@@ -16,7 +16,7 @@ tags:
 上一篇文章谈到阻塞队列使用interface{}保存不同类型的消息任务，但是后端的事件循环在消费任务时需要根据消息类型进行处理，需要进行类型转化。GO语言和其他编程语言类似，强制类型转化可能造成异常，因此需要使用语言本身提供的类型断言机制和Switch实现安全的类型转化，和任务处理。ok，直接来看leader角色下的事件循环中如何进行类型判断和任务处理。
 
 {% highlight Go %}
-	func (rf *Raft) leaderLoop() {
+func (rf *Raft) leaderLoop() {
     //初始化
 	heartbeats := true
 	commitSync := make(map[int]bool)
@@ -90,13 +90,13 @@ tags:
 上面的代码是上一篇文章谈到的事件循环中，节点leader状态所对应的循环处理逻辑。本文通过这个循环说明raft实现中处理请求的流程。当然，分别还有candidator、follower状态的循环，限于篇幅在此不逐一说明。分析这一段代码，首先是节点成为leader后的变量初始化。
 
 {% highlight Go linenos%}
-	//初始化
-	heartbeats := true
-	commitSync := make(map[int]bool)
-	var timeoutChan <-chan time.Time
-	
-	respChan := make(chan *AppendEntriesReply, 64)
-	snapChan := make(chan *SnatshotReply, 32)
+//初始化
+heartbeats := true
+commitSync := make(map[int]bool)
+var timeoutChan <-chan time.Time
+
+respChan := make(chan *AppendEntriesReply, 64)
+snapChan := make(chan *SnatshotReply, 32)
 {% endhighlight %}
 
 **初始化:**“是否发送心跳包flag”的heartbeats、“收集follower反馈状态”的map、“心跳包发送时钟”timeoutChan和两个“收集followers返回ID”的channels。接下来是循环模块，可以看到每次循环都需要判断当前机器是否仍处于leader状态。
@@ -106,7 +106,7 @@ tags:
 **select事务处理：**select作用不赘述，我们用它监听多个channel的状态变化。首先，剥离select中最大的阻塞队列读取任务模块，看一看其他case的作用。第一个case监听系统推出指令；最后一个case设置心跳flag状态；第二个和第三个case作用类似，当leader为一个Log向followers发起一致性请求时，需要等待大部分followers返回消息，才能最终提交该条Log。根据followers RPC返回的状态，将身份ID放入两个channel中。handleResponseAppend处理这些followers返回的状态，决定follower是正常添加了日志，抑或需要重传日志，其内部逻辑本文最后会进行梳理。handleResponseAppend成功返回后，会触发leader的日志提交事件。提交重点看看leaderCommit如何统计一句同步状态的follower个数。
 
 {% highlight Go %}
-	func (rf *Raft) leaderCommit(commitSync map[int]bool, PeerId int) {
+func (rf *Raft) leaderCommit(commitSync map[int]bool, PeerId int) {
 	commitSync[PeerId] = true
 	//set Leader commitIndex
 	if len(commitSync) >= rf.QuorumSize() {
@@ -139,12 +139,12 @@ tags:
 
 {% highlight Go linenos%}
 case *AgreementArgs:
-	rp, _ := (e.reply).(*AgreementRely)
-	*rp = rf.handleRequestAgreement(req, respChan, snapChan)
-	
-	commitSync[rf.me] = true
-	timeoutChan = random(HeartbeatInterval, HeartbeatInterval)
-	heartbeats = false
+rp, _ := (e.reply).(*AgreementRely)
+*rp = rf.handleRequestAgreement(req, respChan, snapChan)
+
+commitSync[rf.me] = true
+timeoutChan = random(HeartbeatInterval, HeartbeatInterval)
+heartbeats = false
 {% endhighlight %}
 
 回头看看handleRequestAgreement实际业务代码。首先，本次日志记录命令；然后，广播给followers发起一致性协商；最后，设置本地日志长度，和下一条日志位置，返回用户**如何这条日志能够顺利提交，那么它所处的Term和日志位置**。
@@ -208,24 +208,24 @@ func (rf *Raft) AppendEntries(args AppendEntriesArgs, reply *AppendEntriesReply)
 
 {% highlight Go %}
 case e := <-rf.blockqueue:
-			switch req := e.args.(type) {
-			case *RequestVoteArgs:
-				//get voteGranter from candidator, neead resert expired timer
-				rp, _ := (e.reply).(*RequestVoteReply)
-				*rp, update = rf.handleRequestVote(req)
-			case *AppendEntriesArgs:
-				//get heartbears from leader, need reset expired timer
-				rp, _ := (e.reply).(*AppendEntriesReply)
-				*rp, update = rf.handleAppendEntries(req)
-				//snatshot
-			case *SnatshotArgs:
-				rp, _ := (e.reply).(*SnatshotReply)
-				*rp, update = rf.handleInstallSnapshot(req)
-			default:
-				err = NotLeaderError
-			}
+switch req := e.args.(type) {
+case *RequestVoteArgs:
+	//get voteGranter from candidator, neead resert expired timer
+	rp, _ := (e.reply).(*RequestVoteReply)
+	*rp, update = rf.handleRequestVote(req)
+case *AppendEntriesArgs:
+	//get heartbears from leader, need reset expired timer
+	rp, _ := (e.reply).(*AppendEntriesReply)
+	*rp, update = rf.handleAppendEntries(req)
+	//snatshot
+case *SnatshotArgs:
+	rp, _ := (e.reply).(*SnatshotReply)
+	*rp, update = rf.handleInstallSnapshot(req)
+default:
+	err = NotLeaderError
+}
 
-			e.err <- err
+e.err <- err
 {% endhighlight %}
 
 那说了这么多是不是说完了日志协商过程呢，其实还没有说event_loop中收到follower反馈后，进行处理的handleResponseAppend函数。我看可以看到这里基本逻辑和Raft的描述相同，首先判断follower端是否接受了传输过去的日志。如果success，调整leader为该follower所维护的日志下表字。；如果fail，判断是不是leader已经过期；如果没过期，根据维护的日志下标，重新获取需要同步的日志内容，发送给该follower。这里的判断条件，对应raft论文中谈到的多种临界case，读者可以读者paper和代码加深理解。
