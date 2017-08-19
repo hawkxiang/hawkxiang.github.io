@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Raft一致性算法实现1——主循环和阻塞队列
+title: Raft一致性算法原理与实现——主循环和阻塞队列
 author: hawker
 permalink: /2016/11/raft-implemnt1.html
 date: 2016-11-21 19:00:00
@@ -8,6 +8,7 @@ category:
     - 编程
 tags:
     - distributed-system
+    - raft
     - algorithm
 ---
 [上一片文章](http://www.hawkers.cc/2016/11/raft-algorithm.html)简单的说明了Raft的基本原理，当然推荐大家去读一读[paper](https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf)更加深入的理解一致性算法的设计。本篇博客开始，将简单介绍如何使用Golang实现Raft算法，并在其基础上实现基本的分布式k/v存储。本篇将从整体性介绍程序的结构，以及基本的事件循环等内容，希望大家对整体代码框架有一个宏观的认识。
