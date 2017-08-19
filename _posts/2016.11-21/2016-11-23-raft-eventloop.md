@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Raft一致性算法实现2——事件循环
+title: Raft一致性算法原理与实现——事件循环
 author: hawker
 permalink: /2016/11/raft-eventloop.html
 date: 2016-11-23 16:00:00
@@ -8,6 +8,7 @@ category:
     - 编程
 tags:
     - distributed-system
+    - raft
     - algorithm
 ---
 本文继续介绍Raft实现，[上一片文章](http://www.hawkers.cc/2016/11/raft-implemnt1.html)谈到了整体架构以及与任务相关的阻塞队列。针对上篇文章遗留的问题，本文着重介绍事件循环如何正确消费阻塞队列中的任务，以及Raft算法中节点处在三种不同角色时如何处理事件循环。
