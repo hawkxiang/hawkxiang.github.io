@@ -2,7 +2,7 @@
 layout: post
 title: Raft一致性算法原理与实现——主循环和阻塞队列
 author: hawker
-permalink: /2016/11/raft-implemnt1.html
+permalink: /2016/11/raft-implemnt.html
 date: 2016-11-21 19:00:00
 category:
     - 编程
