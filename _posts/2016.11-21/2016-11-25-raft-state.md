@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Raft一致性算法原理与实现——主循环和阻塞队列
+title: Raft一致性算法原理与实现——分布式K/V存储
 author: hawker
 permalink: /2016/11/raft-state.html
 date: 2016-11-25 14:00:00
