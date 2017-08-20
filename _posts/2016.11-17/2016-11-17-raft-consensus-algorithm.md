@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Raft一致性算法原理
+title: Raft一致性算法原理与实现——概述
 author: hawker
 permalink: /2016/11/raft-algorithm.html
 date: 2016-11-17 18:00:00
@@ -8,6 +8,7 @@ category:
     - 编程
 tags:
     - distributed-system
+    - raft
     - algorithm
 ---
 一致性问题一直是分布式系统的核心问题，Raft针对该问题设计了基于日志的可容错的一致性算法。本文将简单说明Raft一致性算法的原理。[参考论文](https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf)
