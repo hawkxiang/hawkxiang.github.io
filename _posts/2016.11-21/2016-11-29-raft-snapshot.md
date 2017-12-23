@@ -16,7 +16,7 @@ tags:
 ## Log Compaction 
 在一个实际的分布式存储系统中，不可能让节点中的日志无限增加。冗长的日志导致系统重启时需要花费很长的时间进行回放，影响系统整体可用性。Raft与Chubby、Zookeeper等类似，都采用了snapshot技术进行日志压缩，丢弃snapshot之前的日志项目。
 
-![Alt text](/upload/2016/11/napshot.jpg "SnapShot Log Compaction")
+![Alt text](/upload/2016/11/snapshot.png "SnapShot Log Compaction")
 
 Raft中每个节点独立的对自己的系统状态进行snapshot操作，当然只能对已经committed日志项(已经apply到了状态机)进行snapshot。snapshot有一些元数据，包括last_included_index，即snapshot覆盖的最后一条committed日志项的index，以及last_included_term，即这条日志的termid。这两个值在snapshot之后的第一条log entry的AppendEntriesRPC的consistency check的时候会被用上。一旦这个节点做完了snapshot，就可以把这条日志及之前的日志项目删除，压缩日志长度。
 
