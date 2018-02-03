@@ -3,13 +3,13 @@ layout: post
 title: Zookeeper Client架构分析——ZK链接无法重连问题排查
 author: hawker
 permalink: /2018/01/zookeeper-watcher-reconnect.html
-date: 2018-01-139 20:00:00
+date: 2018-01-31 20:00:00
 category:
     - 编程
 tags:
-    - Zookeeper
-    - Curator
-    - architecture
+    - zookeeper
+    - curator
+    - architecturear
 ---
 本篇将通过工作遇到的“Zookeeper无法重连”问题，深入Zookeeper Client和Curator进行架构分析，解析出现改问题的原因。网上很多文章介绍了Zookeeper Client特别是Curator的用法，但是鲜有资料分享两者的内部实现和工作原理。既然，本篇文章是为了解决针对性问题，故而文章分为三段进行阐述：What、Why、How。
 
