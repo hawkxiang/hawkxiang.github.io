@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Zookeeper Client架构分析——ZK链接无法重连问题排查
+title: Zookeeper Client架构分析——ZK链接重连失败排查
 author: hawker
 permalink: /2018/01/zookeeper-watcher-reconnect.html
 date: 2018-01-31 20:00:00
