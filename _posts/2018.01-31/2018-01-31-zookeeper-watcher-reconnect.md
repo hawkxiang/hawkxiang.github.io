@@ -83,7 +83,7 @@ ClientCnxn又包括两个对象，或者说工作线程：eventThread和sendThre
 
 所以，在使用同步AddWatcher时，大量watcher场景下，永远无法出发Curator提供给zkClient进行session重建的默认watcher。虽然Curator无法通过重建session创建新的链接，但这里不能解释第二个困惑点：NIO底层其实会一直重建网络链接，理论上网络恢复后旧的链接会顺利恢复才对呀。
 
-#### NIO链接恢复
+#### 网络恢复与SessionExpired事件回调处理
 
 解释NIO无法恢复旧的connect失败前，我们来看一看重连后client接到server告知SessionExpired后，做了那些事情。博主在原先的架构上，进行了一定的修改SessionExpired架构图如下：
 ![Alt text](/upload/2018/01/sessionExpired.jpg "sessionExpired")
@@ -94,7 +94,7 @@ ClientCnxn又包括两个对象，或者说工作线程：eventThread和sendThre
 
 ok，到这里好像链接不能重建的问题已经解释清楚，我们只能走重建session一条路，同时业务代码避免使用同步AddWatcher方式，真是如此吗？
 
-#### Zookeeper Session销毁流程
+#### Curator的session重建机制
 
 真对以上两个结论，博主将业务代码触发的process中wacher重新注册改为异步后，确实能够重建Session+session成功，大家是不是认为问题已经解决。别急，虽然链接问题解决了，但是又遇到新的问题：通过重建session后watcher有时会丢失，接下来我们继续进行问题排查和架构分析。分析watcher丢失原因前，我们先看看Curator重建Session的实际流程吧。我们还是参考上面SessionExpired架构图进行分析。
 
