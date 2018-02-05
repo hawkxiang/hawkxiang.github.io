@@ -13,6 +13,8 @@ tags:
 ---
 本篇将通过工作遇到的“Zookeeper无法重连”问题，深入Zookeeper Client和Curator进行架构分析，解析出现改问题的原因。网上很多文章介绍了Zookeeper Client特别是Curator的用法，但是鲜有资料分享两者的内部实现和工作原理。既然，本篇文章是为了解决针对性问题，故而文章分为三段进行阐述：What、Why、How。
 
+如果觉得文章长，可以看一下ppt: [传送门](/upload/2017/11/zk_client_pr.pdf "分享的内容")
+
 ## What：遇到了什么问题
 工作上，最近刚刚接手了一个新的组件维护工作，该服务与Zookeeper Server进行数据同步，维护大量的Watcher，当然也会周期性的从ZK手动拉去数据。这个服务当数据量小时一切正常，当我接手时整个数据量级已经很大，这时服务存在一个严重的问题：当到Zookeeper server的链接断开后难以重连成功。我们总结一些问题表现：
 1. 服务和Zookeeper之间保持大量的Watchers。
