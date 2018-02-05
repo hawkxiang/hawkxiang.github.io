@@ -1,19 +1,18 @@
 ---
 layout: post
-title: Zookeeper Client架构分析——ZK链接无法重连问题排查
+title: Zookeeper Client架构分析——ZK链接重连失败排查
 author: hawker
 permalink: /2018/01/zookeeper-watcher-reconnect.html
-date: 2018-01-139 20:00:00
+date: 2018-01-31 20:00:00
 category:
     - 编程
 tags:
-    - Zookeeper
-    - Curator
-    - architecture
+    - zookeeper
+    - curator
+    - architecturear
 ---
 本篇将通过工作遇到的“Zookeeper无法重连”问题，深入Zookeeper Client和Curator进行架构分析，解析出现改问题的原因。网上很多文章介绍了Zookeeper Client特别是Curator的用法，但是鲜有资料分享两者的内部实现和工作原理。既然，本篇文章是为了解决针对性问题，故而文章分为三段进行阐述：What、Why、How。
 
-的一篇[分布系统介绍](http://www.hpcs.cs.tsukuba.ac.jp/~tatebe/lecture/h23/dsys/dsd-tutorial.html)的文章，对此有比较详细的介绍。
 ## What：遇到了什么问题
 工作上，最近刚刚接手了一个新的组件维护工作，该服务与Zookeeper Server进行数据同步，维护大量的Watcher，当然也会周期性的从ZK手动拉去数据。这个服务当数据量小时一切正常，当我接手时整个数据量级已经很大，这时服务存在一个严重的问题：当到Zookeeper server的链接断开后难以重连成功。我们总结一些问题表现：
 1. 服务和Zookeeper之间保持大量的Watchers。
@@ -39,10 +38,10 @@ tags:
 ClientCnxn又包括两个对象，或者说工作线程：eventThread和sendThread。
 
 1. eventThread: 主要维护一个队列eventQueue，里面存放Watcher触发后的事件。可以把eventThread内部看成死循环，一直Loop从Watcher取出事件，最终调用业务代码指定Watcher时传入的process函数。
-2. sendThread：维护两个队列，sendQueue发送队列，zkClient所有发完Zookeeper集群的数据都会先包装成自定义的Packet形式，放入发送队列。底层的NIO会从发送队列取包，不断发送出去。pendingQueue也比较好理解，里面存放已经发送但是服务还未响应的包。sendThread也有一个死循用，处理整个zkClient的主业务，并进行业务通讯。
+2. sendThread：维护两个队列，outgoingQueue发送队列，zkClient所有发完Zookeeper集群的数据都会先包装成自定义的Packet形式，放入发送队列。底层的NIO会从发送队列取包，不断发送出去。pendingQueue也比较好理解，里面存放已经发送但是服务还未响应的包。sendThread也有一个死循用，处理整个zkClient的主业务，并进行业务通讯。
 3. ClientCnxNIO：zkClient底层的网络通讯依赖ClientCnxNIO这个对象进行，这里不详细说明IO复用相关知识。
 
-介绍完zkClient基本情况，我们返回本节开始时谈到的内容：Zookeeper Client连接恢复时，做了什么事情。Zookeeper本身需要维护一个Session的概念，其实重建链接后做的就是Session恢复的事情。zkClient中有一个叫做primeConnect的函数，主要负责这件事情，他会将client的Watcher，Auth，session其他数据打包成多个Packet放入sendQueue发送给server，进行sesion恢复。这里需要提及的是：
+介绍完zkClient基本情况，我们返回本节开始时谈到的内容：Zookeeper Client连接恢复时，做了什么事情。Zookeeper本身需要维护一个Session的概念，其实重建链接后做的就是Session恢复的事情。zkClient中有一个叫做primeConnect的函数，主要负责这件事情，他会将client的Watcher，Auth，session其他数据打包成多个Packet放入outgoingQueue发送给server，进行sesion恢复。这里需要提及的是：
 
 1. primeConnect打包多个Packet，尺寸128KB左右；原因是如果client端Watcher很多整体数据量容易超过1MB；Zookeeper Server要求数据包小于1MB，大包视为异常，会关闭链接。
 2. 只要链接建立这个primeConnect都会被调用，同时会将本地的SessionId等信息也传给Server。
@@ -84,7 +83,7 @@ ClientCnxn又包括两个对象，或者说工作线程：eventThread和sendThre
 
 所以，在使用同步AddWatcher时，大量watcher场景下，永远无法出发Curator提供给zkClient进行session重建的默认watcher。虽然Curator无法通过重建session创建新的链接，但这里不能解释第二个困惑点：NIO底层其实会一直重建网络链接，理论上网络恢复后旧的链接会顺利恢复才对呀。
 
-#### NIO链接恢复
+#### 网络恢复与SessionExpired事件回调处理
 
 解释NIO无法恢复旧的connect失败前，我们来看一看重连后client接到server告知SessionExpired后，做了那些事情。博主在原先的架构上，进行了一定的修改SessionExpired架构图如下：
 ![Alt text](/upload/2018/01/sessionExpired.pdf "sessionExpired")
@@ -95,13 +94,13 @@ ClientCnxn又包括两个对象，或者说工作线程：eventThread和sendThre
 
 ok，到这里好像链接不能重建的问题已经解释清楚，我们只能走重建session一条路，同时业务代码避免使用同步AddWatcher方式，真是如此吗？
 
-#### Zookeeper Session销毁流程
+#### Curator的session重建机制
 
 真对以上两个结论，博主将业务代码触发的process中wacher重新注册改为异步后，确实能够重建Session+session成功，大家是不是认为问题已经解决。别急，虽然链接问题解决了，但是又遇到新的问题：通过重建session后watcher有时会丢失，接下来我们继续进行问题排查和架构分析。分析watcher丢失原因前，我们先看看Curator重建Session的实际流程吧。我们还是参考上面SessionExpired架构图进行分析。
 
 分析Curator提供的默认watcher即connectState发现，它的回调处理中针对sessionExpired事件调用了reset操作。如图，当sessionExpired触发进入队列头部，取出触发connectState的process进而进行reset处理。reset首先调用底层zkClient内部的disconnect函数，它做两件事情：
 
-1. sendThread：关闭主循环，清空万里sendQueue、pendingQueue以及关闭socket；设置zkClient状态为CLOSE。这时其实已经无法zkClient进行主逻辑处理。
+1. sendThread：关闭主循环，清空outgoingQueue、pendingQueue以及关闭socket；设置zkClient状态为CLOSE。这时其实已经无法zkClient进行主逻辑处理。
 2. eventThread：在eventQueue末尾加入一个新的事件eventofDeath，此外zkClient的默认watcher替换成dummyWatcher，就是不进行任何事件处理。等到eventofDeath被处理时，eventQueue不在接受任何事件入队，知道队列排空后推出该事件队列。
 
 disconnect其实就是做一些清理工作，也是关键一步。接着Curator会重建一个zkClient达到重建session+connect的目的，最终恢复功能。ok，至此销毁到重建流程梳理清楚。那为什么重建session后会watcher会丢失呢，我们业务层一直进行自注册理论上通过新的zkClient可以将旧watcher注册进来，不会丢失。
