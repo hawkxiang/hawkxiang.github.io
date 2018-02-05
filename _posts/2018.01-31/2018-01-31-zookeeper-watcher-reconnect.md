@@ -29,7 +29,7 @@ tags:
 
 #### Zookeeper Client架构
 为了叙述直观方便，博主根据自己的理解手动画了一个Zookeeper Client架构图，仅仅代表本人的了解，限于本人能力，存在的问题请大家指出。
-![Alt text](/upload/2018/01/zk_client.jpg "ZK_Client")
+![Alt text](/upload/2018/01/zk_client.pdf "ZK_Client")
 
 不论我们是直接使用Zookeeper Client库抑或Curator这样封装后的工具，当我们进行ZK操作时，都需要获取一个对象，我们将其称作zkClient。zkClient包括很多成员，抛开细节选取与问题相关的重要成员进行讲解：
 
@@ -87,7 +87,7 @@ ClientCnxn又包括两个对象，或者说工作线程：eventThread和sendThre
 #### NIO链接恢复
 
 解释NIO无法恢复旧的connect失败前，我们来看一看重连后client接到server告知SessionExpired后，做了那些事情。博主在原先的架构上，进行了一定的修改SessionExpired架构图如下：
-![Alt text](/upload/2018/01/sessionExpired.jpg "sessionExpired")
+![Alt text](/upload/2018/01/sessionExpired.pdf "sessionExpired")
 
 首先，看下sendThread里面的主循环做了什么，正如上面说的链接正常时它是不断发包、收包，循环处理。当链接断开时，主循环不断尝试reConnected，当然会有sleep，避免busyLoop。
 
