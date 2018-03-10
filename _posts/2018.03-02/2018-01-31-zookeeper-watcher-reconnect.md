@@ -22,7 +22,7 @@ tags:
 问题比较明确，接下来就是分析原因，找出解决方案来。
 
 ## 原因分析和问题处理
-通过查询资料，找到一篇类似现象的文章：[link](https://superuser.com/questions/1021988/connection-remains-flagged-as-established-even-if-host-is-unconnected/1022002 "传送门")。其实，文章中对应上面的问题现象和原因分析的比较明确，也给出了合理的处理方案。
+通过查询资料，找到一篇类似现象的文章：["时光机"](https://superuser.com/questions/1021988/connection-remains-flagged-as-established-even-if-host-is-unconnected/1022002 "传送门")。其实，文章中对应上面的问题现象和原因分析的比较明确，也给出了合理的处理方案。
 
 ### 原因分析
 TCP是一种可靠传输连接，如果server端没有收到client发送的FIN包，将会一直保持ESTABLISHED状态，不论client是否正常、网络中的路由节点是否正常工作。此外，本身tcp没有心跳探活机制，因此如果client端异常关闭连接，另一端是无法感知到，并且从协议上理解也没必要感知到对端关闭。这也解释，为何TCP优雅关闭connection时需要采用四次挥手机制。
