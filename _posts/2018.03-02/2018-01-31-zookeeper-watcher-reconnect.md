@@ -13,7 +13,7 @@ tags:
 最近在工作中遇到一个关于TCP/IP中连接异常的问题，加深了对与TCP/IP整套机制的理解。在此，进行分享希望对遇到同样问题的朋友有所帮助。
 
 ## TCP连接异常问
-工作上一个服务端程序，对外提供短连接RPC响应。服务本身有多个节点，偶然发现其中一个节点的ESTABLISHED达到6万，并且一直无法降低（其他节点1000左右，qps均衡）。遂跟进排查这个奇怪的现象。在RPC通信中，一般client调用完毕后主动clode connection，服务端被动进行关闭。根据TCP/IP四次挥手的流程，机器不应该保存有大量的ESTABLISHED状态连接。因此，我分为以下几个流程进行排查：
+工作上一个服务端程序，对外提供短连接RPC响应。服务本身有多个节点，偶然发现其中一个节点的ESTABLISHED连接达到6万，并且一直无法降低（其他节点1000左右，qps均衡）。遂跟进排查这个奇怪的现象。在RPC通信中，一般client调用完毕后主动clode connection，服务端被动进行关闭。根据TCP/IP四次挥手的流程，机器不应该保存有大量的ESTABLISHED状态连接。因此，我分为以下几个流程进行排查：
 
 1. 通过awk对这些异常连接进行排序、去重、计算client端分布，以及每个client端有异常连接个数，希望能够查处规律。结果，没有发现明显特征。
 2. 通过tcpdump确认异常ESTABLISHED连接，是否正常：发现连接其实已经失效。
@@ -22,8 +22,7 @@ tags:
 问题比较明确，接下来就是分析原因，找出解决方案来。
 
 ## 原因分析和问题处理
-通过查询资料，找到一篇类似想象的文章：https://superuser.com/questions/1021988/connection-remains-flagged-as-established-even-if-host-is-unconnected/1022002
-其实，文章中对应上面的问题现象和原因分析的比较明确，也给出了合理的处理方案。
+通过查询资料，找到一篇类似现象的文章：[link](https://superuser.com/questions/1021988/connection-remains-flagged-as-established-even-if-host-is-unconnected/1022002 "传送门")。其实，文章中对应上面的问题现象和原因分析的比较明确，也给出了合理的处理方案。
 
 ### 原因分析
 TCP是一种可靠传输连接，如果server端没有收到client发送的FIN包，将会一直保持ESTABLISHED状态，不论client是否正常、网络中的路由节点是否正常工作。此外，本身tcp没有心跳探活机制，因此如果client端异常关闭连接，另一端是无法感知到，并且从协议上理解也没必要感知到对端关闭。这也解释，为何TCP优雅关闭connection时需要采用四次挥手机制。
