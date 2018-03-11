@@ -2,8 +2,8 @@
 layout: post
 title: 基于Raft的分片(shards)分布式K/V存储系统
 author: hawker
-permalink: /2017/11/raft-shards1.html
-date: 2017-11-09 18:00:00
+permalink: /2017/12/raft-shards-master.html
+date: 2017-12-09 18:00:00
 category:
     - 编程
 tags:
